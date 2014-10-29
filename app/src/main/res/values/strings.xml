@@ -2,7 +2,15 @@
 <resources>
 
     <string name="app_name">FriendLocator</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_welcome">Welcome to Friend Locator!</string>
+    <string name="sign_in_button">Sign In</string>
+    <string name="welcome_page_title">Welcome to Friend Locator!</string>
+    <string name="have_no_account">Have no acocunt?</string>
+    <string name="register">Register!</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="hello_world">Hello world!</string>
+
+    <string name="sign_in">Sign in to Friend Locator!</string>
 
 </resources>
