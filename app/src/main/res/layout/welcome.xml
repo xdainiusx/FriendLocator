@@ -29,10 +29,10 @@
         android:layout_width="300dip"
         android:layout_marginBottom="160px"
         android:textColor="@color/white"
-        android:text="Sign In"
+        android:text="@string/sign_in_button"
         android:onClick="onSignInClick"
         android:clickable="true"
-        android:background="@color/blue_button"
+        android:background="@color/black_button"
     />
 
     <RelativeLayout
@@ -69,9 +69,9 @@
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:fontFamily="sans-serif-light"
-                android:text="@string/register"
                 android:onClick="onRegisterClick"
                 android:clickable="true"
+                android:text="@string/register_link"
             />
 
         </LinearLayout>

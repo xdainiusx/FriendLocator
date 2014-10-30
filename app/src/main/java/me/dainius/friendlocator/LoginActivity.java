@@ -1,6 +1,7 @@
 package me.dainius.friendlocator;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -27,6 +28,13 @@ public class LoginActivity extends Activity {
         this.password = (EditText) findViewById(R.id.password);
 
         Log.d(getClass().getName(), "Email: " + this.emailAddress + "Password: " + this.password);
+    }
+
+    public void onPasswordRecoverClick(View view) {
+        Log.d(getClass().getName(), "onPasswordRecoverClick() clicked");
+        Intent intent = new Intent(this, PasswordRecoveryActivity.class);
+        startActivity(intent);
+
     }
 
 }

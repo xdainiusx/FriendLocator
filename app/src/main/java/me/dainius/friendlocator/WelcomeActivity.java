@@ -27,5 +27,7 @@ public class WelcomeActivity extends Activity {
 
     public void onRegisterClick(View view) {
         Log.d(getClass().getName(), "onRegisterClick() clicked");
+        Intent intent = new Intent(this, RegisterActivity.class);
+        startActivity(intent);
     }
 }

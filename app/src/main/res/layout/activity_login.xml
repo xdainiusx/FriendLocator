@@ -17,7 +17,7 @@
         android:paddingBottom="350dp"
         android:gravity="center"
         android:fontFamily="sans-serif-light"
-        android:text="@string/sign_in"
+        android:text="@string/login_title"
         />
 
     <RelativeLayout
@@ -32,7 +32,7 @@
                 android:layout_marginTop="0dp"
                 android:layout_height="60dp"
                 android:paddingLeft="5dp"
-                android:hint="Email Address"
+                android:hint="@string/hint_email"
                 android:layout_width="fill_parent"
                 android:textSize="15dp"
                 android:textColor="#000000"
@@ -44,7 +44,7 @@
                 android:layout_marginTop="70dp"
                 android:layout_height="60dp"
                 android:paddingLeft="5dp"
-                android:hint="Password"
+                android:hint="@string/hint_password"
                 android:layout_width="fill_parent"
                 android:textSize="15dp"
                 android:textColor="#000000"
@@ -64,9 +64,42 @@
                 android:onClick="onSignInClick"
                 android:textColor="@color/white"
                 android:clickable="true"
-                android:background="@color/blue_button"
+                android:background="@color/black_button"
             />
 
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="220dip"
+        android:layout_height="40dip"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true">
+
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20px"
+            android:layout_weight="0.33">
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:gravity="center"
+                android:layout_height="fill_parent"
+                android:layout_weight="0.5"
+                android:layout_marginRight="10px"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-light"
+
+                android:onClick="onPasswordRecoverClick"
+                android:clickable="true"
+                android:text="@string/forgot_link"
+            />
+
+        </LinearLayout>
 
     </RelativeLayout>
 
