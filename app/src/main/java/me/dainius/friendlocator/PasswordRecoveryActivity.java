@@ -7,10 +7,17 @@ import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
 
+/**
+ * Password Recovery Activity
+ */
 public class PasswordRecoveryActivity extends Activity {
 
     private EditText emailAddress;
 
+    /**
+     * onCreate()
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,6 +27,10 @@ public class PasswordRecoveryActivity extends Activity {
         setContentView(R.layout.activity_password_recovery);
     }
 
+    /**
+     * onRecoverPasswordClick() - Recover Password button clicked
+     * @param view
+     */
     public void onRecoverPasswordClick(View view) {
         Log.d(getClass().getName(), "onRecoverPasswordClick clicked");
     }

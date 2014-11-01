@@ -1,36 +1,53 @@
 package me.dainius.friendlocator;
 
+import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Fragment;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 
-
+/**
+ * Main Activity - Main Activity after user login
+ */
 public class MainActivity extends Activity {
 
+    ActionBar.Tab friendsTab, mapTab, settingsTab;
+    Fragment friendsFragment = new FriendsFragment();
+    Fragment mapFragment = new MapFragment();
+    Fragment settingsFragment = new SettingsFragment();
+
+    /**
+     * onCreate()
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-    }
+        setContentView(R.layout.activity_main);
+
+        ActionBar actionBar = getActionBar();
+
+        // Hide Actionbar Icon
+        actionBar.setDisplayShowHomeEnabled(false);
+
+        // Hide Actionbar Title
+        actionBar.setDisplayShowTitleEnabled(false);
+
+        // Create Actionbar Tabs
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        this.friendsTab = actionBar.newTab().setIcon(R.drawable.icon_friends_tab);
+        this.friendsTab = actionBar.newTab().setText("Friends");
+        this.mapTab = actionBar.newTab().setText("Map");
+        this.settingsTab = actionBar.newTab().setText("Settings");
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
+        this.friendsTab.setTabListener(new TabListener(friendsFragment));
+        this.mapTab.setTabListener(new TabListener(mapFragment));
+        this.settingsTab.setTabListener(new TabListener(settingsFragment));
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        // Add tabs to actionbar
+        actionBar.addTab(this.friendsTab);
+        actionBar.addTab(this.mapTab);
+        actionBar.addTab(this.settingsTab);
     }
 }

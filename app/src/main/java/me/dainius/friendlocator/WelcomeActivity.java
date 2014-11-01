@@ -7,8 +7,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 
+/**
+ * WelcomeActivity - first activity
+ */
 public class WelcomeActivity extends Activity {
 
+    /**
+     * onCreate()
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -19,12 +26,20 @@ public class WelcomeActivity extends Activity {
         setContentView(R.layout.welcome);
     }
 
+    /**
+     * onSignInClick() - Sign in button click
+     * @param view
+     */
     public void onSignInClick(View view) {
         Log.d(getClass().getName(), "onSignInClick() clicked");
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
     }
 
+    /**
+     * onRegisterClick() - Register link click
+     * @param view
+     */
     public void onRegisterClick(View view) {
         Log.d(getClass().getName(), "onRegisterClick() clicked");
         Intent intent = new Intent(this, RegisterActivity.class);
