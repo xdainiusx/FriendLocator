@@ -1,53 +1,58 @@
 package me.dainius.friendlocator;
 
 import android.app.ActionBar;
-import android.app.Activity;
-import android.app.Fragment;
+import android.app.TabActivity;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.view.Window;
+import android.widget.TabHost;
+import android.widget.TabHost.TabSpec;
 
 /**
- * Main Activity - Main Activity after user login
+ * Main Activity - user comes here after login
  */
-public class MainActivity extends Activity {
+public class MainActivity extends TabActivity {
 
-    ActionBar.Tab friendsTab, mapTab, settingsTab;
-    Fragment friendsFragment = new FriendsFragment();
-    Fragment mapFragment = new MapFragment();
-    Fragment settingsFragment = new SettingsFragment();
+    private ActionBar actionBar;
 
     /**
      * onCreate()
      * @param savedInstanceState
      */
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
-        ActionBar actionBar = getActionBar();
+        this.actionBar = getActionBar();
 
-        // Hide Actionbar Icon
-        actionBar.setDisplayShowHomeEnabled(false);
+        //TabHost tabHost = getTabHost();
+        TabHost tabHost = (TabHost)findViewById(android.R.id.tabhost);
+        Resources res = getResources();
 
-        // Hide Actionbar Title
-        actionBar.setDisplayShowTitleEnabled(false);
+        // Friends Tab
+        TabSpec friendsTab = tabHost.newTabSpec("Friends");
+        friendsTab.setIndicator("", res.getDrawable(R.drawable.icon_friends_tab));
+        Intent friendsIntent = new Intent(this, FriendsActivity.class);
+        friendsTab.setContent(friendsIntent);
 
-        // Create Actionbar Tabs
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        // Map Tab
+        TabSpec mapTab = tabHost.newTabSpec("Map");
+        mapTab.setIndicator("", res.getDrawable(R.drawable.icon_map_tab));
+        Intent mapIntent = new Intent(this, MapActivity.class);
+        mapTab.setContent(mapIntent);
 
-        this.friendsTab = actionBar.newTab().setIcon(R.drawable.icon_friends_tab);
-        this.friendsTab = actionBar.newTab().setText("Friends");
-        this.mapTab = actionBar.newTab().setText("Map");
-        this.settingsTab = actionBar.newTab().setText("Settings");
+        // Settings Tab
+        TabSpec settingsTab = tabHost.newTabSpec("Settings");
+        settingsTab.setIndicator("", res.getDrawable(R.drawable.icon_settings_tab));
+        Intent settingsIntent = new Intent(this, SettingsActivity.class);
+        settingsTab.setContent(settingsIntent);
 
-
-        this.friendsTab.setTabListener(new TabListener(friendsFragment));
-        this.mapTab.setTabListener(new TabListener(mapFragment));
-        this.settingsTab.setTabListener(new TabListener(settingsFragment));
-
-        // Add tabs to actionbar
-        actionBar.addTab(this.friendsTab);
-        actionBar.addTab(this.mapTab);
-        actionBar.addTab(this.settingsTab);
+        // Adding all TabSpec to TabHost
+        tabHost.addTab(friendsTab);
+        tabHost.addTab(mapTab);
+        tabHost.addTab(settingsTab);
     }
 }

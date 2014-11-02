@@ -10,9 +10,9 @@
     <string name="title_activity_register">Register</string>
     <string name="title_activity_password_recovery">Recover Password</string>
     <string name="title_activity_main">Main Activity</string>
-    <string name="title_activity_friends">Friends Activity</string>
-    <string name="title_activity_map">Map Activity</string>
-    <string name="title_activity_settings">Settings Activity</string>
+    <string name="title_activity_friends">Friends</string>
+    <string name="title_activity_map">Map</string>
+    <string name="title_activity_settings">Settings</string>
 
     <!-- Title Names -->
     <string name="welcome_page_title">Welcome to Friend Locator!</string>

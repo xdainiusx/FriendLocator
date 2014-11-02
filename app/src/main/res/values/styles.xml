@@ -1,26 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <!-- the theme applied to the application or activity -->
+    <style name="FLActionBarTheme" parent="android:Theme.Holo.Light.DarkActionBar">
+        <item name="android:actionBarStyle">@style/FLActionBarStyle</item>
+        <item name="android:actionBarTabStyle">@style/FLActionBarTabStyle</item>
+        <item name="android:actionBarTabBarStyle">@style/FLActionBarTabBarStyle</item>
+        <item name="android:actionBarTabTextStyle">@style/FLActionBarTabTextStyle</item>
+        <item name="android:actionMenuTextColor">@color/white</item>
     </style>
 
-    <style name="FullscreenTheme" parent="android:Theme.NoTitleBar">
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowBackground">@null</item>
-        <item name="metaButtonBarStyle">@style/ButtonBar</item>
-        <item name="metaButtonBarButtonStyle">@style/ButtonBarButton</item>
+    <!-- general styles for the application -->
+    <style name="FLActionBarStyle" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="android:titleTextStyle">@style/TitleTextStyle</item>
+        <item name="android:background">@color/dark_purple</item>
+        <item name="android:backgroundStacked">@color/dark_purple</item>
+        <item name="android:backgroundSplit">@color/dark_purple</item>
+
+        <item name="android:displayOptions">showTitle</item>
+        <item name="displayOptions">showTitle</item>
+        <item name="android:icon">@android:color/transparent</item>
     </style>
 
-    <style name="ButtonBar">
-        <item name="android:paddingLeft">2dp</item>
-        <item name="android:paddingTop">5dp</item>
-        <item name="android:paddingRight">2dp</item>
-        <item name="android:paddingBottom">0dp</item>
-        <item name="android:background">@android:drawable/bottom_bar</item>
+    <!-- action bar tab text -->
+    <style name="TabTextStyle">
+        <item name="android:textColor">@color/red</item>
     </style>
 
-    <style name="ButtonBarButton" />
+    <!-- action bar tab style -->
+    <style name="FLActionBarTabStyle">
+        <item name="android:background">@drawable/tab_bar_background</item>
+    </style>
+
+    <!-- action bar tab bar style -->
+    <style name="FLActionBarTabBarStyle">
+        <item name="android:background">@color/red</item>
+    </style>
+
+    <!-- action bar title text -->
+    <style name="TitleTextStyle">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="FLActionBarTabTextStyle">
+
+    </style>
+
+
+
+    <!-- Style Collection -->
+    <style name="ActivityBarFont" parent="@android:style/TextAppearance.Medium">
+        <item name="android:padding">0dip</item>
+        <item name="android:textSize">28dip</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="ActivityBarStyle" parent="@android:style/TextAppearance.Medium">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_alignParentTop">true</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:background">@color/dark_purple</item>
+    </style>
 
 </resources>
