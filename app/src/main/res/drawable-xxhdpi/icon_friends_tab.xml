@@ -2,11 +2,11 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:drawable="@drawable/songs_gray"
+        android:drawable="@drawable/friends_white"
         android:state_selected="true" />
 
     <item
-        android:drawable="@drawable/songs_white"
+        android:drawable="@drawable/friends_black"
         android:state_selected="false" />
 
 </selector>
