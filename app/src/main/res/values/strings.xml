@@ -2,19 +2,22 @@
 <resources>
 
     <!-- Application Name -->
-    <string name="app_name">FriendLocator</string>
+    <string name="app_name">Friend Locator</string>
 
     <!-- Activity Names -->
     <string name="title_activity_welcome">Welcome to Friend Locator!</string>
     <string name="title_activity_login">Sign in</string>
     <string name="title_activity_register">Register</string>
     <string name="title_activity_password_recovery">Recover Password</string>
+    <string name="title_activity_main">Main Activity</string>
+    <string name="title_activity_friends">Friends</string>
+    <string name="title_activity_map">Map</string>
+    <string name="title_activity_settings">Settings</string>
 
     <!-- Title Names -->
     <string name="welcome_page_title">Welcome to Friend Locator!</string>
     <string name="login_title">Sign in to Friend Locator!</string>
     <string name="register_title">Register with Friend Locator!</string>
-
     <string name="action_settings">Settings</string>
 
     <!-- Buttons -->
@@ -32,8 +35,8 @@
     <string name="hint_password">Password</string>
     <string name="hint_password_verify">Verify Password</string>
 
-
     <!-- Text Strings -->
     <string name="have_no_account">Have no acocunt?</string>
+
 
 </resources>

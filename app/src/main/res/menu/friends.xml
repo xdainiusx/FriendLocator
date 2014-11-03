@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="me.dainius.friendlocator.FriendsActivity" >
+
+    <item
+        android:id="@+id/action_friends"
+        android:title="@string/title_activity_friends"
+        android:orderInCategory="100"
+    />
+
+</menu>

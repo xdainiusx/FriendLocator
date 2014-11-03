@@ -7,6 +7,9 @@ import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
 
+/**
+ * Register Activity - User registration screen
+ */
 public class RegisterActivity extends Activity {
 
     private EditText name;
@@ -14,6 +17,10 @@ public class RegisterActivity extends Activity {
     private EditText password;
     private EditText passwordVerify;
 
+    /**
+     * onCreate()
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,6 +30,10 @@ public class RegisterActivity extends Activity {
         setContentView(R.layout.activity_register);
     }
 
+    /**
+     * onRegisterClick() - Registration Form submit
+     * @param view
+     */
     public void onRegisterClick(View view) {
         Log.d(getClass().getName(), "onRegisterClick() clicked");
         this.name = (EditText) findViewById(R.id.name);
