@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="80dp"
+    android:padding="5dp">
+
+    <!-- Left Side - Friend Photo -->
+    <ImageView
+        android:id="@+id/photo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="5dp"
+        android:src="@drawable/friend_photo" >
+    </ImageView>
+
+    <!-- Right Side -->
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="80dp">
+
+        <!-- Label -->
+        <RelativeLayout
+            android:id="@+id/labelWrapper"
+            android:layout_width="220dp"
+            android:layout_height="80dp">
+
+            <TextView
+                android:id="@+id/friendName"
+                android:singleLine="true"
+                android:layout_alignParentTop="true"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:textSize="20dp" >
+            </TextView>
+
+            <TextView
+                android:id="@+id/friendEmail"
+                android:singleLine="true"
+                android:layout_alignParentBottom="true"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:textSize="15dp" >
+            </TextView>
+
+        </RelativeLayout>
+
+        <!-- Icon -->
+        <RelativeLayout
+            android:layout_width="60dp"
+            android:layout_height="80dp"
+            android:layout_alignParentRight="true">
+
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="20dp"
+                android:src="@drawable/gps_green" >
+            </ImageView>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+
+</LinearLayout>

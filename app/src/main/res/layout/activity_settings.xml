@@ -17,11 +17,309 @@
 
     </RelativeLayout>
 
-    <TextView android:text="SETTINGS"
-        android:padding="15dip"
-        android:textSize="18dip"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        />
+    <!-- USER ACCOUNT -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginLeft="20dp"
+        android:bottom="1px">
+
+        <!-- Right Side -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="40dp">
+
+            <!-- Label -->
+            <RelativeLayout
+                android:id="@+id/userAccountWrapper"
+                android:layout_width="360dp"
+                android:layout_height="40dp">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="2dp"
+                    android:textSize="16dp"
+                    android:textStyle="bold"
+                    android:text="@string/user_account">
+                </TextView>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- Logout -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="80dp"
+        android:padding="5dp"
+        android:background="@drawable/border_thin"
+        android:clickable="true"
+        android:onClick="onLogoutClick">
+
+        <!-- Left Side Icon -->
+        <ImageView
+            android:id="@+id/logoutIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/logout" >
+        </ImageView>
+
+        <!-- Right Side -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="80dp">
+
+            <!-- Label -->
+            <RelativeLayout
+                android:id="@+id/logoutWrapper"
+                android:layout_width="300dp"
+                android:layout_height="80dp">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="80dp"
+                    android:paddingTop="20dp"
+                    android:paddingBottom="20dp"
+                    android:textSize="20dp"
+                    android:text="@string/logout">
+                </TextView>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- Change Password -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="80dp"
+        android:padding="5dp"
+        android:background="@drawable/border_thin"
+        android:clickable="true"
+        android:onClick="onChangePasswordClick">
+
+        <!-- Left Side Icon -->
+        <ImageView
+            android:id="@+id/changePasswordIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/change_password" >
+        </ImageView>
+
+        <!-- Right Side -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="80dp">
+
+            <!-- Label -->
+            <RelativeLayout
+                android:id="@+id/changePasswordWrapper"
+                android:layout_width="300dp"
+                android:layout_height="80dp">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="80dp"
+                    android:paddingTop="20dp"
+                    android:paddingBottom="20dp"
+                    android:textSize="20dp"
+                    android:text="@string/change_password">
+                </TextView>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- Update Account -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="80dp"
+        android:padding="5dp"
+        android:background="@drawable/border_thin"
+        android:clickable="true"
+        android:onClick="onUpdateAccountClick">
+
+        <!-- Left Side Icon -->
+        <ImageView
+            android:id="@+id/updateAccountIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/update_account" >
+        </ImageView>
+
+        <!-- Right Side -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="80dp">
+
+            <!-- Label -->
+            <RelativeLayout
+                android:id="@+id/updateAccountWrapper"
+                android:layout_width="300dp"
+                android:layout_height="80dp">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="80dp"
+                    android:paddingTop="20dp"
+                    android:paddingBottom="20dp"
+                    android:textSize="20dp"
+                    android:text="@string/update_account">
+                </TextView>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- APPLICATION DETAILS -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginLeft="20dp"
+        android:bottom="1px">
+
+        <!-- Right Side -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="40dp">
+
+            <!-- Label -->
+            <RelativeLayout
+                android:id="@+id/appDetailsWrapper"
+                android:layout_width="360dp"
+                android:layout_height="40dp">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="2dp"
+                    android:textSize="16dp"
+                    android:textStyle="bold"
+                    android:text="@string/app_details">
+                </TextView>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- Help -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:padding="5dp"
+        android:background="@drawable/border_thin">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent">
+
+            <!-- Label -->
+            <RelativeLayout
+                android:paddingLeft="20dp"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="fill_parent"
+                    android:layout_height="25dp"
+                    android:layout_marginTop="0dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:textSize="16dp"
+                    android:text="@string/help_title">
+                </TextView>
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="fill_parent"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="25dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:textSize="14dp"
+                    android:text="@string/help_subtitle"
+                    android:clickable="true"
+                    android:onClick="onHelpClick">
+                </TextView>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:paddingLeft="20dp"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="fill_parent"
+                    android:layout_height="25dp"
+                    android:layout_marginTop="50dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:textSize="16dp"
+                    android:text="@string/version_title">
+                </TextView>
+
+                <TextView
+                    android:singleLine="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_width="fill_parent"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="75dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:textSize="14dp"
+                    android:text="@string/version_subtitle">
+                </TextView>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+
 
 </LinearLayout>

@@ -15,20 +15,31 @@
             android:text="@string/title_activity_friends"
         />
 
+        <RelativeLayout
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="7dp"
+            android:layout_marginRight="10dp">
+
+            <ImageView
+                android:id="@+id/imageMinus"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:src="@drawable/plus"
+                android:clickable="true"
+                android:onClick="onAddFriendClick"
+            />
+
+        </RelativeLayout>
+
     </RelativeLayout>
 
-    <TextView android:text="FRIENDS"
-        android:padding="15dip"
-        android:textSize="18dip"
+    <ListView
+        android:id="@android:id/list"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-    />
+        android:layout_height="fill_parent">
+    </ListView>
 
-    <TextView android:text="FRIENDS"
-        android:padding="15dip"
-        android:textSize="18dip"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-    />
 
 </LinearLayout>

@@ -3,11 +3,15 @@
     <color name="black_overlay">#66000000</color>
     <color name="blue_button">#0f85fb</color>
     <color name="white_background">#FFFFFF</color>
+    <color name="white_transparent">#80FFFFFF</color>
     <color name="black_button">#DD000000</color>
     <color name="white">#FFFFFF</color>
     <color name="red">#FF0000</color>
+    <color name="red_dark">#a91010</color>
+    <color name="green">#2a7f04</color>
     <color name="black">#000000</color>
     <color name="grey">#434343</color>
+    <color name="light_grey">#DD8e8d8d</color>
     <color name="dark_purple">#562a3c</color>
 
     <color name="transparent">#00000000</color>

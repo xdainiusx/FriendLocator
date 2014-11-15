@@ -1,6 +1,7 @@
 package me.dainius.friendlocator;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +12,8 @@ import android.view.Window;
  * WelcomeActivity - first activity
  */
 public class WelcomeActivity extends Activity {
+
+    private static Context context;
 
     /**
      * onCreate()
@@ -45,4 +48,13 @@ public class WelcomeActivity extends Activity {
         Intent intent = new Intent(this, RegisterActivity.class);
         startActivity(intent);
     }
+
+    /**
+     * getActivityContext() - gets activity context, good to use in inner classes
+     * @return
+     */
+    public static Context getActivityContext() {
+        return WelcomeActivity.context;
+    }
+
 }

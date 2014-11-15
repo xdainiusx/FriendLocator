@@ -14,11 +14,23 @@
         revision="20.0.0"
         sha1="9d9013e9ff35fc3756411e62873c363c70c638fa"/>
     <item
+        dex="/Users/dainius/Development/Android/Projects/FriendLocator/app/build/intermediates/pre-dexed/debug/bolts-android-1.1.2-301ace2698751781d443507854a2fd96cfdec09e.jar"
+        jar="/Users/dainius/.gradle/caches/modules-2/files-2.1/com.parse.bolts/bolts-android/1.1.2/91c20388c9a45f62b5ed8fe0502bb76ff6251fc7/bolts-android-1.1.2.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="91c20388c9a45f62b5ed8fe0502bb76ff6251fc7"/>
+    <item
         dex="/Users/dainius/Development/Android/Projects/FriendLocator/app/build/intermediates/pre-dexed/debug/internal_impl-20.0.0-f56f51278ccdae5080ed64a41e52b504a315dec7.jar"
         jar="/Users/dainius/Development/Android/Projects/FriendLocator/app/build/intermediates/exploded-aar/com.android.support/support-v4/20.0.0/libs/internal_impl-20.0.0.jar"
         jumboMode="false"
         revision="20.0.0"
         sha1="e40b3078e3fbd353c9f44da8df25a8fc0078209d"/>
+    <item
+        dex="/Users/dainius/Development/Android/Projects/FriendLocator/app/build/intermediates/pre-dexed/debug/Parse-1.7.1-9ab1a0de3806658d5f0d2241006f6891b1c1880e.jar"
+        jar="/Users/dainius/Development/Android/Projects/FriendLocator/app/libs/Parse-1.7.1.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="87c45f9f66da531a65f065ee32f603c7e6db1528"/>
     <item
         dex="/Users/dainius/Development/Android/Projects/FriendLocator/app/build/intermediates/pre-dexed/debug/classes-4ea354868551cfa3bd7ddb7c0815fc0ff4c00676.jar"
         jar="/Users/dainius/Development/Android/Projects/FriendLocator/app/build/intermediates/exploded-aar/com.google.android.gms/play-services/5.2.08/classes.jar"

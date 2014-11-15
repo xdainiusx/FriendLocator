@@ -1,27 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <fragment
+        android:id="@+id/mapView"
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        tools:layout="@layout/fragment_map" />
+
     <RelativeLayout
         android:id="@+id/layTab"
-        style="@style/ActivityBarStyle">
+        android:layout_width="fill_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:layout_alignParentTop="true"
+        android:layout_weight="1"
+        android:background="@color/dark_purple">
 
         <TextView
             style="@style/ActivityBarFont"
             android:text="@string/title_activity_map"
         />
 
+        <RelativeLayout
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="7dp"
+            android:layout_marginRight="10dp">
+
+            <ImageView
+                android:id="@+id/imageMinus"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:src="@drawable/minus"
+                android:clickable="true"
+                android:onClick="onConnectionCancelClick"
+            />
+
+        </RelativeLayout>
+
     </RelativeLayout>
 
-    <TextView android:text="MAP"
-        android:padding="15dip"
-        android:textSize="18dip"
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        />
+        android:layout_height="70dip"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp">
 
-</LinearLayout>
+
+        <LinearLayout
+
+            android:layout_width="300dip"
+            android:layout_height="70dip"
+            android:background="@drawable/map_label_background"
+            android:layout_margin="20px"
+            android:layout_weight="0.33"
+            android:layout_centerInParent="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:id="@+id/distanceTextView"
+                android:layout_width="wrap_content"
+                android:gravity="center"
+                android:layout_height="fill_parent"
+                android:layout_weight="0.5"
+                android:textColor="@color/black"
+                android:textSize="24sp"
+                android:fontFamily="sans-serif-light"
+                android:text=""
+                />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+
+</RelativeLayout>

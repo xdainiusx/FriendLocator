@@ -1,9 +1,10 @@
+.DS_Store
 *.class
 .idea
-.gradle
+.gradle/*
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
-
+app/apk/*
 # Package Files #
 *.jar
 *.war

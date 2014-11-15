@@ -36,7 +36,9 @@
             android:layout_width="fill_parent"
             android:textSize="15dp"
             android:textColor="#000000"
+            android:inputType="textNoSuggestions|textPersonName"
             android:background="@drawable/textlines"
+            android:singleLine="true"
         />
 
         <EditText
@@ -48,8 +50,9 @@
             android:layout_width="fill_parent"
             android:textSize="15dp"
             android:textColor="#000000"
-            android:inputType="textPassword"
+            android:inputType="textNoSuggestions|textEmailAddress"
             android:background="@drawable/textlines"
+            android:singleLine="true"
         />
 
         <EditText
@@ -61,8 +64,9 @@
             android:layout_width="fill_parent"
             android:textSize="15dp"
             android:textColor="#000000"
-            android:inputType="textPassword"
+            android:inputType="textNoSuggestions|textPassword"
             android:background="@drawable/textlines"
+            android:singleLine="true"
         />
 
         <EditText
@@ -74,8 +78,9 @@
             android:layout_width="fill_parent"
             android:textSize="15dp"
             android:textColor="#000000"
-            android:inputType="textPassword"
+            android:inputType="textNoSuggestions|textPassword"
             android:background="@drawable/textlines"
+            android:singleLine="true"
         />
 
         <Button
