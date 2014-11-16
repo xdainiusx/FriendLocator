@@ -42,9 +42,7 @@ public class FriendsInvitationPendingActivity extends Activity {
         }
 
         this.pendingInvitesListView = (ListView) findViewById(android.R.id.list);
-
         this.pendingInvitesListView.setAdapter(new InvitationPendingListViewAdapter(this, this.getStringArray(this.pendingInvites)));
-
 
         Button close_button = (Button) findViewById(R.id.close_button);
         close_button.setOnClickListener(new View.OnClickListener() {
@@ -53,7 +51,6 @@ public class FriendsInvitationPendingActivity extends Activity {
                 finish();
             }
         });
-
 
     }
 
@@ -70,18 +67,56 @@ public class FriendsInvitationPendingActivity extends Activity {
         return pendingInvites;
     }
 
-    public void onAcceptClick(View view) {
-        Log.d(ACTIVITY, "onAcceptClick() clicked");
-        TextView emailView = (TextView)findViewById(R.id.friendEmail);
-        String email = emailView.getText().toString();
-        Log.d(ACTIVITY, email);
+    /**
+     * acceptClickListener
+     */
+    public View.OnClickListener acceptClickListener = new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            final int position = pendingInvitesListView.getPositionForView((View) view.getParent());
+            Log.d(ACTIVITY, "Accept clicked, row: " + position);
+
+            String email = (String)pendingInvitesListView.getAdapter().getItem(position);
+
+            Log.d(ACTIVITY, email);
+
+            acceptInvitation(email);
+        }
+    };
+
+    /**
+     * declineClickListener
+     */
+    public View.OnClickListener declineClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            final int position = pendingInvitesListView.getPositionForView((View) view.getParent());
+            Log.d(ACTIVITY, "Decline clicked, row: " + position);
+
+            String email = (String)pendingInvitesListView.getAdapter().getItem(position);
+
+            Log.d(ACTIVITY, email);
+
+            declineInvitation(email);
+        }
+    };
+
+
+    /**
+     * acceptInvitation()
+     * @param email
+     */
+    public void acceptInvitation(String email) {
+        Log.d(ACTIVITY, "ACCEPT");
     }
 
-    public void onDeclineClick(View view) {
-        Log.d(ACTIVITY, "onDeclineClick() clicked");
-        TextView emailView = (TextView)findViewById(R.id.friendEmail);
-        String email = emailView.getText().toString();
-        Log.d(ACTIVITY, email);
+    /**
+     * declineInvitation()
+     * @param email
+     */
+    public void declineInvitation(String email) {
+        Log.d(ACTIVITY, "DECLINE");
     }
 
 }

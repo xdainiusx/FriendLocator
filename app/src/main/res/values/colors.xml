@@ -11,6 +11,7 @@
     <color name="green">#2a7f04</color>
     <color name="black">#000000</color>
     <color name="grey">#434343</color>
+    <color name="lighter_grey">#cecece</color>
     <color name="light_grey">#DD8e8d8d</color>
     <color name="dark_purple">#562a3c</color>
 

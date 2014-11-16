@@ -52,6 +52,19 @@ public class FriendsActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_friends);
 
+
+        this.inviterFriends = this.getPendingFriendInvitations();
+        View invitationsTab = findViewById(R.id.invitationsTab);
+        if(this.inviterFriends.size()>0) {
+            Log.d(ACTIVITY, "Found invitations: " + this.inviterFriends.size());
+            invitationsTab.setVisibility(View.VISIBLE);
+        }
+        else {
+            Log.d(ACTIVITY, "No found invitations!");
+        }
+
+
+
         this.friendsListView = (ListView) findViewById(android.R.id.list);
 
         this.friends = this.generateFriends();
@@ -104,16 +117,29 @@ public class FriendsActivity extends Activity {
      */
     @Override
     protected void onStart() {
-        super.onResume();
-        this.inviterFriends = this.getPendingFriendInvitations();
-        Log.d(ACTIVITY, "Found invitations: " + this.inviterFriends.size());
-        for(int i=0; i< this.inviterFriends.size(); i++) {
-            Log.d(ACTIVITY, this.inviterFriends.get(i));
-        }
+        super.onStart();
+    }
 
-        Intent intent = new Intent(this, FriendsInvitationPendingActivity.class);
-        intent.putStringArrayListExtra("pendingInvites",this.inviterFriends);
-        startActivity(intent);
+    /**
+     * onInvitationsClick()
+     * @param view
+     */
+    public void onInvitationsClick(View view) {
+        Log.d(ACTIVITY, "onInvitationsClick() clicked");
+        this.inviterFriends = this.getPendingFriendInvitations();
+        if(this.inviterFriends.size()>0) {
+            Log.d(ACTIVITY, "Found invitations: " + this.inviterFriends.size());
+            for (int i = 0; i < this.inviterFriends.size(); i++) {
+                Log.d(ACTIVITY, this.inviterFriends.get(i));
+            }
+
+            Intent intent = new Intent(this, FriendsInvitationPendingActivity.class);
+            intent.putStringArrayListExtra("pendingInvites", this.inviterFriends);
+            startActivity(intent);
+        }
+        else {
+            Log.d(ACTIVITY, "No found invitations!");
+        }
     }
 
 

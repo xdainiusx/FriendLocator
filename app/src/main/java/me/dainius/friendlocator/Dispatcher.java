@@ -3,6 +3,8 @@ package me.dainius.friendlocator;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Window;
+
 import com.parse.ParseUser;
 
 
@@ -24,6 +26,7 @@ public class Dispatcher extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         if (ParseUser.getCurrentUser() != null) {
             startActivity(new Intent(this, MainActivity.class));
         } else {

@@ -35,6 +35,27 @@
 
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/invitationsTab"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:onClick="onInvitationsClick"
+        android:clickable="true"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center"
+            android:fontFamily="sans-serif-light"
+            android:textSize="22dip"
+            android:textColor="@color/red_dark"
+            android:text="@string/invitations_pending"
+            android:background="@color/lighter_grey"
+        />
+
+    </RelativeLayout>
+
     <ListView
         android:id="@android:id/list"
         android:layout_width="fill_parent"

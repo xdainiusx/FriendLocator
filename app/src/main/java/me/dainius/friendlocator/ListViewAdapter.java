@@ -64,6 +64,7 @@ public class ListViewAdapter extends ArrayAdapter<Friend> {
      * @return Friend[] object
      */
     public Friend getItem(int position){
+        Log.d(ADAPTER, "Item at position: " + position);
         return this.friends[position];
     }
 }
