@@ -328,6 +328,10 @@ public class MapActivity extends Activity {
         }
     }
 
+    /**
+     * onConnectionCancelClick()
+     * @param view
+     */
     public void onConnectionCancelClick(View view) {
         Log.d(ACTIVITY, "onConnectionCancelClick() clicked");
     }

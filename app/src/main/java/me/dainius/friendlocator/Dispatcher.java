@@ -14,6 +14,8 @@ import com.parse.ParseUser;
  */
 public class Dispatcher extends Activity {
 
+    private static String DISPATCHER = "Dispatcher";
+
     /**
      * Initializer
      */
@@ -27,11 +29,14 @@ public class Dispatcher extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         if (ParseUser.getCurrentUser() != null) {
+            ParseUser user = ParseUser.getCurrentUser();
+            user.put("isOnline", true);
+            user.saveInBackground();
             startActivity(new Intent(this, MainActivity.class));
         } else {
             startActivity(new Intent(this, WelcomeActivity.class));
         }
     }
-
 }

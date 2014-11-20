@@ -36,6 +36,8 @@ public class FriendsActivity extends Activity {
     private static Context context;
     private static String ACTIVITY = "FriendsActivity";
     private static int PENDING = 1;
+    private static int ACCEPTED = 2;
+    private static int DECLINED = 3;
     private ListView friendsListView;
     private Friend[] friends;
     private Friend friendClicked = null;
@@ -87,6 +89,8 @@ public class FriendsActivity extends Activity {
                  */
                 AlertDialog alert = new AlertDialog.Builder(FriendsActivity.this).create();
                 alert.setTitle("Connect with " + friend.getFirstName() + " " + friend.getLastName());
+                Log.d(ACTIVITY, "Friends Email: " + friend.getEmail());
+                Log.d(ACTIVITY, "Friends Location: " + friend.getCoordinateArray()[0] + ", " + friend.getCoordinateArray()[1]);
                 alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -141,7 +145,6 @@ public class FriendsActivity extends Activity {
             Log.d(ACTIVITY, "No found invitations!");
         }
     }
-
 
     /**
      * onAddFriendClick()
@@ -199,6 +202,7 @@ public class FriendsActivity extends Activity {
         ArrayList<String> foundUsers = new ArrayList<String>();
         ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
         query.whereEqualTo("friend", ParseUser.getCurrentUser().getEmail());
+        query.whereEqualTo("status", PENDING);
         query.selectKeys(Arrays.asList("inviter"));
 
         try {
@@ -297,22 +301,21 @@ public class FriendsActivity extends Activity {
             toastIt(message);
         }
         else {
-            this.saveToFriends();
+            this.saveToFriends(this.friendUser, FriendsActivity.PENDING);
 
             this.saveToFriendInvitation(friendEmail);
 
         }
     }
 
-
     /**
      * saveToFriends() - save to Friends table
      */
-    public void saveToFriends() {
+    public void saveToFriends(ParseUser friendUser, int status) {
         Friends friends = new Friends();
         friends.setUser(ParseUser.getCurrentUser());
-        friends.setUsersFriend(this.friendUser);
-        friends.setStatus(FriendsActivity.PENDING);
+        friends.setUsersFriend(friendUser);
+        friends.setStatus(status);
 
         ParseACL friendAcl = new ParseACL();
         friendAcl.setPublicReadAccess(true);
@@ -344,6 +347,7 @@ public class FriendsActivity extends Activity {
 
         ParseACL acl = new ParseACL();
         acl.setPublicReadAccess(true);
+        acl.setPublicWriteAccess(true);
         friendInvitation.setACL(acl);
 
         friendInvitation.saveInBackground(new SaveCallback() {
@@ -359,6 +363,25 @@ public class FriendsActivity extends Activity {
                 }
             }
         });
+    }
+
+    /**
+     * deleteFromFriendsInvitations()
+     * @param user
+     * @param friendEmail
+     */
+    public void deleteFromFriendsInvitations(ParseUser user, String friendEmail) {
+        FriendInvitation friendInvitation = null;
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("friend", friendEmail);
+        try {
+            friendInvitation = (FriendInvitation)query.getFirst();
+        } catch (ParseException e) {
+            friendInvitation = null;
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        friendInvitation.deleteInBackground();
     }
 
     /**
@@ -438,4 +461,15 @@ public class FriendsActivity extends Activity {
 
         return friends;
     }
+
+    /**
+     * getFriends()
+     * @return Friend[]
+     */
+    public Friend[] getFriends() {
+        Friend[] friends = new Friend[2];
+
+        return friends;
+    }
+
 }
