@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.parse.FindCallback;
 import com.parse.ParseACL;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -33,6 +34,7 @@ import java.util.List;
  */
 public class FriendsActivity extends Activity {
 
+    private static boolean DEBUG = false;
     private static Context context;
     private static String ACTIVITY = "FriendsActivity";
     private static int PENDING = 1;
@@ -69,7 +71,8 @@ public class FriendsActivity extends Activity {
 
         this.friendsListView = (ListView) findViewById(android.R.id.list);
 
-        this.friends = this.generateFriends();
+        //this.friends = this.generateFriends();
+        this.friends = this.generateParseFriends();
         Arrays.sort(this.friends);
 
         this.friendsListView.setAdapter(new ListViewAdapter(this, this.friends));
@@ -444,22 +447,43 @@ public class FriendsActivity extends Activity {
      */
     public Friend[] generateFriends() {
 
-        Friend f1 =  new Friend("1", "Ten", "Walls", "tenwalls@gmail.com");
-        Friend f2 =  new Friend("2", "James", "Atkin", "jamesatkin@gmail.com");
-        Friend f3 =  new Friend("3", "John", "Carter", "johncarter@gmail.com");
-        Friend f4 =  new Friend("4", "Carl", "Cox", "carlcox@gmail.com");
-        Friend f5 =  new Friend("5", "Pete", "Tong", "petetong@gmail.com");
-        Friend f6 =  new Friend("6", "Mike", "Edwards", "mikeedwards@gmail.com");
-        Friend f7 =  new Friend("7", "Annie", "Mac", "anniemac@gmail.com");
-        Friend f8 =  new Friend("8", "Thomas", "Yorke", "thomasyorke@gmail.com");
-        Friend f9 =  new Friend("9", "Liam", "Howlett", "liamhowlett@gmail.com");
+        Friend f1 = new Friend("1", "Ten", "Walls", "tenwalls@gmail.com");
+        Friend f2 = new Friend("2", "James", "Atkin", "jamesatkin@gmail.com");
+        Friend f3 = new Friend("3", "John", "Carter", "johncarter@gmail.com");
+        Friend f4 = new Friend("4", "Carl", "Cox", "carlcox@gmail.com");
+        Friend f5 = new Friend("5", "Pete", "Tong", "petetong@gmail.com");
+        Friend f6 = new Friend("6", "Mike", "Edwards", "mikeedwards@gmail.com");
+        Friend f7 = new Friend("7", "Annie", "Mac", "anniemac@gmail.com");
+        Friend f8 = new Friend("8", "Thomas", "Yorke", "thomasyorke@gmail.com");
+        Friend f9 = new Friend("9", "Liam", "Howlett", "liamhowlett@gmail.com");
         Friend f10 = new Friend("10", "Keith", "Flint", "keithflint@gmail.com");
         Friend f11 = new Friend("11", "Robert", "de Naja", "robertdenaja@gmail.com");
         Friend f12 = new Friend("12", "Gui", "Boratto", "guiboratto@gmail.com");
 
-        Friend[] friends = new Friend[] {f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12};
-
+        Friend[] friends = new Friend[]{f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12};
         return friends;
+    }
+
+    public Friend[] generateParseFriends() {
+
+        final Friend[] friend = null;
+        Friends friends;
+        ParseQuery<Friends> query = ParseQuery.getQuery("Friends");
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+
+        query.findInBackground(new FindCallback<Friends>() {
+            public void done(List<Friends> friends, ParseException e) {
+                //Log.d(ACTIVITY, "FRIENDS: "+friends.get(0).getEmail());
+            }
+        });
+
+
+
+        Friend f1 = new Friend("12", "Gui", "Boratto", "guiboratto@gmail.com");
+        Friend f2 = new Friend("7", "Annie", "Mac", "anniemac@gmail.com");
+
+        Friend[] fr = new Friend[]{f1, f2};
+        return fr;
     }
 
     /**
