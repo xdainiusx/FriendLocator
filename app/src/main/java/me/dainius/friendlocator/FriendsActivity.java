@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.parse.FindCallback;
 import com.parse.ParseACL;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -33,9 +34,12 @@ import java.util.List;
  */
 public class FriendsActivity extends Activity {
 
+    private static boolean DEBUG = false;
     private static Context context;
     private static String ACTIVITY = "FriendsActivity";
     private static int PENDING = 1;
+    private static int ACCEPTED = 2;
+    private static int DECLINED = 3;
     private ListView friendsListView;
     private Friend[] friends;
     private Friend friendClicked = null;
@@ -52,9 +56,23 @@ public class FriendsActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_friends);
 
+
+        this.inviterFriends = this.getPendingFriendInvitations();
+        View invitationsTab = findViewById(R.id.invitationsTab);
+        if(this.inviterFriends.size()>0) {
+            Log.d(ACTIVITY, "Found invitations: " + this.inviterFriends.size());
+            invitationsTab.setVisibility(View.VISIBLE);
+        }
+        else {
+            Log.d(ACTIVITY, "No found invitations!");
+        }
+
+
+
         this.friendsListView = (ListView) findViewById(android.R.id.list);
 
-        this.friends = this.generateFriends();
+        //this.friends = this.generateFriends();
+        this.friends = this.generateParseFriends();
         Arrays.sort(this.friends);
 
         this.friendsListView.setAdapter(new ListViewAdapter(this, this.friends));
@@ -74,6 +92,8 @@ public class FriendsActivity extends Activity {
                  */
                 AlertDialog alert = new AlertDialog.Builder(FriendsActivity.this).create();
                 alert.setTitle("Connect with " + friend.getFirstName() + " " + friend.getLastName());
+                Log.d(ACTIVITY, "Friends Email: " + friend.getEmail());
+                Log.d(ACTIVITY, "Friends Location: " + friend.getCoordinateArray()[0] + ", " + friend.getCoordinateArray()[1]);
                 alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -104,18 +124,30 @@ public class FriendsActivity extends Activity {
      */
     @Override
     protected void onStart() {
-        super.onResume();
-        this.inviterFriends = this.getPendingFriendInvitations();
-        Log.d(ACTIVITY, "Found invitations: " + this.inviterFriends.size());
-        for(int i=0; i< this.inviterFriends.size(); i++) {
-            Log.d(ACTIVITY, this.inviterFriends.get(i));
-        }
-
-        Intent intent = new Intent(this, FriendsInvitationPendingActivity.class);
-        intent.putStringArrayListExtra("pendingInvites",this.inviterFriends);
-        startActivity(intent);
+        super.onStart();
     }
 
+    /**
+     * onInvitationsClick()
+     * @param view
+     */
+    public void onInvitationsClick(View view) {
+        Log.d(ACTIVITY, "onInvitationsClick() clicked");
+        this.inviterFriends = this.getPendingFriendInvitations();
+        if(this.inviterFriends.size()>0) {
+            Log.d(ACTIVITY, "Found invitations: " + this.inviterFriends.size());
+            for (int i = 0; i < this.inviterFriends.size(); i++) {
+                Log.d(ACTIVITY, this.inviterFriends.get(i));
+            }
+
+            Intent intent = new Intent(this, FriendsInvitationPendingActivity.class);
+            intent.putStringArrayListExtra("pendingInvites", this.inviterFriends);
+            startActivity(intent);
+        }
+        else {
+            Log.d(ACTIVITY, "No found invitations!");
+        }
+    }
 
     /**
      * onAddFriendClick()
@@ -173,6 +205,7 @@ public class FriendsActivity extends Activity {
         ArrayList<String> foundUsers = new ArrayList<String>();
         ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
         query.whereEqualTo("friend", ParseUser.getCurrentUser().getEmail());
+        query.whereEqualTo("status", PENDING);
         query.selectKeys(Arrays.asList("inviter"));
 
         try {
@@ -271,22 +304,21 @@ public class FriendsActivity extends Activity {
             toastIt(message);
         }
         else {
-            this.saveToFriends();
+            this.saveToFriends(this.friendUser, FriendsActivity.PENDING);
 
             this.saveToFriendInvitation(friendEmail);
 
         }
     }
 
-
     /**
      * saveToFriends() - save to Friends table
      */
-    public void saveToFriends() {
+    public void saveToFriends(ParseUser friendUser, int status) {
         Friends friends = new Friends();
         friends.setUser(ParseUser.getCurrentUser());
-        friends.setUsersFriend(this.friendUser);
-        friends.setStatus(FriendsActivity.PENDING);
+        friends.setUsersFriend(friendUser);
+        friends.setStatus(status);
 
         ParseACL friendAcl = new ParseACL();
         friendAcl.setPublicReadAccess(true);
@@ -318,6 +350,7 @@ public class FriendsActivity extends Activity {
 
         ParseACL acl = new ParseACL();
         acl.setPublicReadAccess(true);
+        acl.setPublicWriteAccess(true);
         friendInvitation.setACL(acl);
 
         friendInvitation.saveInBackground(new SaveCallback() {
@@ -333,6 +366,25 @@ public class FriendsActivity extends Activity {
                 }
             }
         });
+    }
+
+    /**
+     * deleteFromFriendsInvitations()
+     * @param user
+     * @param friendEmail
+     */
+    public void deleteFromFriendsInvitations(ParseUser user, String friendEmail) {
+        FriendInvitation friendInvitation = null;
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("friend", friendEmail);
+        try {
+            friendInvitation = (FriendInvitation)query.getFirst();
+        } catch (ParseException e) {
+            friendInvitation = null;
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        friendInvitation.deleteInBackground();
     }
 
     /**
@@ -395,21 +447,53 @@ public class FriendsActivity extends Activity {
      */
     public Friend[] generateFriends() {
 
-        Friend f1 =  new Friend("1", "Ten", "Walls", "tenwalls@gmail.com");
-        Friend f2 =  new Friend("2", "James", "Atkin", "jamesatkin@gmail.com");
-        Friend f3 =  new Friend("3", "John", "Carter", "johncarter@gmail.com");
-        Friend f4 =  new Friend("4", "Carl", "Cox", "carlcox@gmail.com");
-        Friend f5 =  new Friend("5", "Pete", "Tong", "petetong@gmail.com");
-        Friend f6 =  new Friend("6", "Mike", "Edwards", "mikeedwards@gmail.com");
-        Friend f7 =  new Friend("7", "Annie", "Mac", "anniemac@gmail.com");
-        Friend f8 =  new Friend("8", "Thomas", "Yorke", "thomasyorke@gmail.com");
-        Friend f9 =  new Friend("9", "Liam", "Howlett", "liamhowlett@gmail.com");
+        Friend f1 = new Friend("1", "Ten", "Walls", "tenwalls@gmail.com");
+        Friend f2 = new Friend("2", "James", "Atkin", "jamesatkin@gmail.com");
+        Friend f3 = new Friend("3", "John", "Carter", "johncarter@gmail.com");
+        Friend f4 = new Friend("4", "Carl", "Cox", "carlcox@gmail.com");
+        Friend f5 = new Friend("5", "Pete", "Tong", "petetong@gmail.com");
+        Friend f6 = new Friend("6", "Mike", "Edwards", "mikeedwards@gmail.com");
+        Friend f7 = new Friend("7", "Annie", "Mac", "anniemac@gmail.com");
+        Friend f8 = new Friend("8", "Thomas", "Yorke", "thomasyorke@gmail.com");
+        Friend f9 = new Friend("9", "Liam", "Howlett", "liamhowlett@gmail.com");
         Friend f10 = new Friend("10", "Keith", "Flint", "keithflint@gmail.com");
         Friend f11 = new Friend("11", "Robert", "de Naja", "robertdenaja@gmail.com");
         Friend f12 = new Friend("12", "Gui", "Boratto", "guiboratto@gmail.com");
 
-        Friend[] friends = new Friend[] {f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12};
+        Friend[] friends = new Friend[]{f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12};
+        return friends;
+    }
+
+    public Friend[] generateParseFriends() {
+
+        final Friend[] friend = null;
+        Friends friends;
+        ParseQuery<Friends> query = ParseQuery.getQuery("Friends");
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+
+        query.findInBackground(new FindCallback<Friends>() {
+            public void done(List<Friends> friends, ParseException e) {
+                //Log.d(ACTIVITY, "FRIENDS: "+friends.get(0).getEmail());
+            }
+        });
+
+
+
+        Friend f1 = new Friend("12", "Gui", "Boratto", "guiboratto@gmail.com");
+        Friend f2 = new Friend("7", "Annie", "Mac", "anniemac@gmail.com");
+
+        Friend[] fr = new Friend[]{f1, f2};
+        return fr;
+    }
+
+    /**
+     * getFriends()
+     * @return Friend[]
+     */
+    public Friend[] getFriends() {
+        Friend[] friends = new Friend[2];
 
         return friends;
     }
+
 }

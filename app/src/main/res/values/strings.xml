@@ -48,6 +48,7 @@
     <string name="version_title">Version</string>
     <string name="version_subtitle">1.0.1</string>
     <string name="header_activity_pending_invitations">Pending friend invitations</string>
+    <string name="invitations_pending">Have Pending Invitations!</string>
 
     <!-- Buttons -->
     <string name="button_accept">Accept</string>

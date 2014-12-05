@@ -43,13 +43,17 @@ public class ListViewAdapter extends ArrayAdapter<Friend> {
         View rowView = inflater.inflate(R.layout.activity_friends_item, parent, false);
 
         ImageView imageViewPhoto = (ImageView) rowView.findViewById(R.id.photo);
-        imageViewPhoto.setImageResource(R.drawable.friend_photo);
+        if(friends[position]!=null)
+            imageViewPhoto.setImageResource(R.drawable.friend_photo);
 
         TextView textViewFriendName = (TextView) rowView.findViewById(R.id.friendName);
-        textViewFriendName.setText(friends[position].getFirstName() + " " + friends[position].getLastName());
-
+        if(friends[position]!=null)
+            textViewFriendName.setText(friends[position].getFirstName() + " " + friends[position].getLastName());
+        else
+            textViewFriendName.setText("No friends found.");
         TextView textViewFriendEmail = (TextView) rowView.findViewById(R.id.friendEmail);
-        textViewFriendEmail.setText(friends[position].getEmail());
+        if(friends[position]!=null)
+            textViewFriendEmail.setText(friends[position].getEmail());
 
         Friend friend = friends[position];
 
@@ -64,6 +68,7 @@ public class ListViewAdapter extends ArrayAdapter<Friend> {
      * @return Friend[] object
      */
     public Friend getItem(int position){
+        Log.d(ADAPTER, "Item at position: " + position);
         return this.friends[position];
     }
 }

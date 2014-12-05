@@ -26,18 +26,33 @@ public class SettingsActivity extends Activity {
         setContentView(R.layout.activity_settings);
     }
 
+    /**
+     * onLogoutClick()
+     * @param view
+     */
     public void onLogoutClick(View view) {
         Log.d(ACTIVITY, "onLogoutClick() clicked");
+        ParseUser user = ParseUser.getCurrentUser();
+        user.put("isOnline", false);
+        user.saveInBackground();
         ParseUser.logOut();
         Intent intent = new Intent(SettingsActivity.this, Dispatcher.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
 
+    /**
+     * onChangePasswordClick()
+     * @param view
+     */
     public void onChangePasswordClick(View view) {
         Log.d(ACTIVITY, "onChangePasswordClick() clicked");
     }
 
+    /**
+     * onUpdateAccountClick()
+     * @param view
+     */
     public void onUpdateAccountClick(View view) {
         Log.d(ACTIVITY, "onUpdateAccountClick() clicked");
     }

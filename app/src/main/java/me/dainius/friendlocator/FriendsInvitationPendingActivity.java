@@ -5,11 +5,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.parse.ParseACL;
+import com.parse.ParseException;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 
@@ -19,10 +27,14 @@ import java.util.ArrayList;
 public class FriendsInvitationPendingActivity extends Activity {
 
     private static String ACTIVITY = "FriendsInvitationPendingActivity";
+    private static int PENDING = 1;
+    private static int ACCEPTED = 2;
+    private static int DECLINED = 3;
     private static Context context;
     private ListView pendingInvitesListView;
     private ArrayList<String> pendingInvites = null;
     private TextView emailAddress;
+    private InvitationPendingListViewAdapter adapter;
 
     /**
      * onCreate()
@@ -42,9 +54,8 @@ public class FriendsInvitationPendingActivity extends Activity {
         }
 
         this.pendingInvitesListView = (ListView) findViewById(android.R.id.list);
-
-        this.pendingInvitesListView.setAdapter(new InvitationPendingListViewAdapter(this, this.getStringArray(this.pendingInvites)));
-
+        this.adapter = new InvitationPendingListViewAdapter(this, this.getStringArray(this.pendingInvites));
+        this.pendingInvitesListView.setAdapter(this.adapter);
 
         Button close_button = (Button) findViewById(R.id.close_button);
         close_button.setOnClickListener(new View.OnClickListener() {
@@ -53,8 +64,50 @@ public class FriendsInvitationPendingActivity extends Activity {
                 finish();
             }
         });
+    }
 
+    /**
+     * onPause()
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(ACTIVITY, "onPause");
+    }
 
+    /**
+     * onStart()
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(ACTIVITY, "onStart");
+    }
+
+    /**
+     * onResume()
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(ACTIVITY, "onResume");
+    }
+
+    /**
+     * onStop()
+     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(ACTIVITY, "onStop");
+    }
+
+    /**
+     * onDestroy()
+     */
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(ACTIVITY, "onDestroy");
     }
 
     /**
@@ -70,18 +123,214 @@ public class FriendsInvitationPendingActivity extends Activity {
         return pendingInvites;
     }
 
-    public void onAcceptClick(View view) {
-        Log.d(ACTIVITY, "onAcceptClick() clicked");
-        TextView emailView = (TextView)findViewById(R.id.friendEmail);
-        String email = emailView.getText().toString();
-        Log.d(ACTIVITY, email);
+    /**
+     * acceptClickListener - called form the Adapter
+     */
+    public View.OnClickListener acceptClickListener = new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            final View v = view;
+            final int position = pendingInvitesListView.getPositionForView((View) v.getParent());
+
+
+
+            Log.d(ACTIVITY, "Accept clicked, row: " + position);
+
+            String email = (String)pendingInvitesListView.getAdapter().getItem(position);
+
+            Log.d(ACTIVITY, "Friends email clicked: " + email);
+
+            acceptInvitation(email);
+
+            for(int i=0; i< pendingInvites.size(); i++){
+                Log.d(ACTIVITY, pendingInvites.get(i).toString());
+            }
+
+            v.animate().setDuration(2000).alpha(0)
+                    .withEndAction(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d(ACTIVITY, "Inside Animate 2000");
+                            pendingInvites.remove(position);
+                            v.setAlpha(1);
+                            //adapter.notifyDataSetChanged();
+                        }
+                    });
+
+//            pendingInvites.remove(position);
+//            adapter.notifyDataSetChanged();
+
+
+        }
+    };
+
+    /**
+     * declineClickListener - called form the Adapter
+     */
+    public View.OnClickListener declineClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            final int position = pendingInvitesListView.getPositionForView((View) view.getParent());
+            Log.d(ACTIVITY, "Decline clicked, row: " + position);
+
+            String email = (String)pendingInvitesListView.getAdapter().getItem(position);
+
+            Log.d(ACTIVITY, email);
+
+            declineInvitation(email);
+        }
+    };
+
+    /**
+     * acceptInvitation()
+     * @param email
+     */
+    public void acceptInvitation(String email) {
+        Log.d(ACTIVITY, "ACCEPT");
+        this.saveToFriends(this.getUserByEmail(email), ACCEPTED);
+        this.changeFriendsInvitationsStatusTo(this.getUserByEmail(email), ParseUser.getCurrentUser().getEmail(), ACCEPTED);
+        //this.clearRow();
+        this.adapter.notifyDataSetChanged();
+        this.toastIt("Friend invitation accepted.");
     }
 
-    public void onDeclineClick(View view) {
-        Log.d(ACTIVITY, "onDeclineClick() clicked");
-        TextView emailView = (TextView)findViewById(R.id.friendEmail);
-        String email = emailView.getText().toString();
-        Log.d(ACTIVITY, email);
+    /**
+     * declineInvitation()
+     * @param email
+     */
+    public void declineInvitation(String email) {
+        Log.d(ACTIVITY, "DECLINE");
+        this.changeFriendsInvitationsStatusTo(this.getUserByEmail(email), ParseUser.getCurrentUser().getEmail(), DECLINED);
+        this.toastIt("Friend invitation declined.");
+    }
+
+    /**
+     * saveToFriends() - save to Friends table
+     */
+    public void saveToFriends(ParseUser friendUser, int status) {
+        if(this.getFriends(ParseUser.getCurrentUser(), friendUser)==null) {
+            Friends friends = new Friends();
+            friends.setUser(ParseUser.getCurrentUser());
+            friends.setUsersFriend(friendUser);
+            friends.setStatus(status);
+
+            ParseACL friendAcl = new ParseACL();
+            friendAcl.setPublicReadAccess(true);
+            friends.setACL(friendAcl);
+
+            friends.saveInBackground(new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "Friend saved to Friends table.");
+                    } else {
+                        Log.d(ACTIVITY, "Error saving friend to Friends table.");
+                    }
+                }
+            });
+        }
+        else {
+            Log.d(ACTIVITY, "User already in Friends table!");
+        }
+    }
+
+    /**
+     * changeFriendsInvitationsStatusTo()
+     * @param user
+     * @param friendEmail
+     * @param status
+     */
+    public void changeFriendsInvitationsStatusTo(ParseUser user, String friendEmail, int status) {
+        Log.d(ACTIVITY, "Inviter Email: " + user.getEmail());
+        Log.d(ACTIVITY, "Friend Email: " + friendEmail);
+        FriendInvitation friendInvitation = null;
+        ParseQuery<FriendInvitation> query = ParseQuery.getQuery("FriendInvitation");
+        query.whereEqualTo("user", user);
+        query.whereEqualTo("friend", friendEmail);
+        try {
+            friendInvitation = query.getFirst();
+            Log.d(ACTIVITY, "INVITER: " + friendInvitation.getUser());
+            //friendInvitation.put("status", status);
+            friendInvitation.setStatus(status);
+            friendInvitation.saveInBackground(new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "FriendInvitation status changed");
+                    } else {
+                        Log.d(ACTIVITY, "Error saving FriendInvitation status: " + e.getLocalizedMessage());
+                    }
+                }
+            });
+
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+
+    }
+
+
+    private void clearRow() {
+        this.pendingInvitesListView.invalidateViews();
+    }
+
+    /**
+     * getUserByEmail() - Assigns user to this.user so we don't do the same query again
+     * @param emailAddress
+     * @return ParseUser
+     */
+    private ParseUser getUserByEmail(String emailAddress) {
+        ParseUser user = null;
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo("username", emailAddress);
+        try {
+            user = query.getFirst();
+        } catch (ParseException e) {
+            user = null;
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        return user;
+    }
+
+    /**
+     * getFriends()
+     * @param user
+     * @param friend
+     * @return Friends
+     */
+    private Friends getFriends(ParseUser user, ParseUser friend) {
+        Friends friends = null;
+        ParseQuery query = ParseQuery.getQuery("Friends");
+        query.whereEqualTo("user", user);
+        query.whereEqualTo("usersFriend", friend);
+        try {
+            friends = (Friends)query.getFirst();
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        return friends;
+    }
+
+    /**
+     * capitalizeString()
+     * @param str
+     * @return String
+     */
+    public String capitalizeString(String str) {
+        String newString = str.substring(0, 1).toUpperCase() + str.substring(1);
+        return newString;
+    }
+
+    /**
+     * toastIt() - toast used for form verification
+     * @param message
+     */
+    private void toastIt(String message) {
+        Log.d(ACTIVITY, message);
+        Toast t = Toast.makeText(getApplicationContext(), this.capitalizeString(message), Toast.LENGTH_LONG);
+        t.setGravity(Gravity.CENTER, 0, 0);
+        t.show();
     }
 
 }

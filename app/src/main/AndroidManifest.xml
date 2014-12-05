@@ -15,7 +15,9 @@
 
         <activity
             android:name=".Dispatcher"
-            android:noHistory="true" >
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
