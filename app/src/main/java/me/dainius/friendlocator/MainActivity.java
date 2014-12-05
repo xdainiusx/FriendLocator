@@ -45,7 +45,7 @@ public class MainActivity extends TabActivity implements
     private static final int FASTEST_INTERVAL_IN_SECONDS = 5;
     private static final long FASTEST_INTERVAL = MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
     private static final float SMALLEST_DISPLACEMENT_IN_METERS = 2f;
-    private static final double LOG_DISTANCE_CHANGE_TO_DB = 2.0;
+    private static final double LOG_DISTANCE_CHANGE_TO_DB = 1.0;
 
     private ActionBar actionBar;
     private int defaultTab = -1;
@@ -315,7 +315,7 @@ public class MainActivity extends TabActivity implements
      * @param location
      */
     public void onLocationChanged(Location location) {
-        Log.d(ACTIVITY, "Location changed");
+        Log.d(ACTIVITY, "Location changed in MainActivity");
         this.currentLocation = location;
         String locationString = "Updated Location: " + this.currentLocation.getLatitude() + ", " + this.currentLocation.getLongitude();
         Log.d(ACTIVITY, locationString);

@@ -57,8 +57,8 @@ public class InvitationPendingListViewAdapter extends ArrayAdapter<String> {
         holder.email = (TextView) rowView.findViewById(R.id.friendEmail);
         holder.acceptButton = (Button) rowView.findViewById(R.id.buttonAccept);
         holder.declineButton = (Button) rowView.findViewById(R.id.buttonDecline);
-        holder.acceptButton.setOnClickListener(this.context.acceptClickListener);
-        holder.declineButton.setOnClickListener(this.context.declineClickListener);
+        holder.acceptButton.setOnClickListener(this.context.acceptClickListener);  // listener in the parent
+        holder.declineButton.setOnClickListener(this.context.declineClickListener);// listener in the parent
         rowView.setTag(holder);
 
         return rowView;

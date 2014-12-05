@@ -39,7 +39,17 @@ public class Friends extends ParseObject {
         put("status", value);
     }
 
+    public String getName() {
+        return getString("name");
+    }
+
+    public String getEmail() {
+        return getString("email");
+    }
+
     public static ParseQuery<Friends> getQuery() {
+
         return ParseQuery.getQuery(Friends.class);
     }
+
 }

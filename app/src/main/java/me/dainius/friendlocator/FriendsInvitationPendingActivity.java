@@ -34,6 +34,7 @@ public class FriendsInvitationPendingActivity extends Activity {
     private ListView pendingInvitesListView;
     private ArrayList<String> pendingInvites = null;
     private TextView emailAddress;
+    private InvitationPendingListViewAdapter adapter;
 
     /**
      * onCreate()
@@ -53,7 +54,8 @@ public class FriendsInvitationPendingActivity extends Activity {
         }
 
         this.pendingInvitesListView = (ListView) findViewById(android.R.id.list);
-        this.pendingInvitesListView.setAdapter(new InvitationPendingListViewAdapter(this, this.getStringArray(this.pendingInvites)));
+        this.adapter = new InvitationPendingListViewAdapter(this, this.getStringArray(this.pendingInvites));
+        this.pendingInvitesListView.setAdapter(this.adapter);
 
         Button close_button = (Button) findViewById(R.id.close_button);
         close_button.setOnClickListener(new View.OnClickListener() {
@@ -122,25 +124,49 @@ public class FriendsInvitationPendingActivity extends Activity {
     }
 
     /**
-     * acceptClickListener
+     * acceptClickListener - called form the Adapter
      */
     public View.OnClickListener acceptClickListener = new View.OnClickListener() {
 
         @Override
         public void onClick(View view) {
-            final int position = pendingInvitesListView.getPositionForView((View) view.getParent());
+            final View v = view;
+            final int position = pendingInvitesListView.getPositionForView((View) v.getParent());
+
+
+
             Log.d(ACTIVITY, "Accept clicked, row: " + position);
 
             String email = (String)pendingInvitesListView.getAdapter().getItem(position);
 
-            Log.d(ACTIVITY, email);
+            Log.d(ACTIVITY, "Friends email clicked: " + email);
 
             acceptInvitation(email);
+
+            for(int i=0; i< pendingInvites.size(); i++){
+                Log.d(ACTIVITY, pendingInvites.get(i).toString());
+            }
+
+            v.animate().setDuration(2000).alpha(0)
+                    .withEndAction(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d(ACTIVITY, "Inside Animate 2000");
+                            pendingInvites.remove(position);
+                            v.setAlpha(1);
+                            //adapter.notifyDataSetChanged();
+                        }
+                    });
+
+//            pendingInvites.remove(position);
+//            adapter.notifyDataSetChanged();
+
+
         }
     };
 
     /**
-     * declineClickListener
+     * declineClickListener - called form the Adapter
      */
     public View.OnClickListener declineClickListener = new View.OnClickListener() {
         @Override
@@ -164,6 +190,8 @@ public class FriendsInvitationPendingActivity extends Activity {
         Log.d(ACTIVITY, "ACCEPT");
         this.saveToFriends(this.getUserByEmail(email), ACCEPTED);
         this.changeFriendsInvitationsStatusTo(this.getUserByEmail(email), ParseUser.getCurrentUser().getEmail(), ACCEPTED);
+        //this.clearRow();
+        this.adapter.notifyDataSetChanged();
         this.toastIt("Friend invitation accepted.");
     }
 
@@ -240,6 +268,11 @@ public class FriendsInvitationPendingActivity extends Activity {
             Log.d(ACTIVITY, e.getLocalizedMessage());
         }
 
+    }
+
+
+    private void clearRow() {
+        this.pendingInvitesListView.invalidateViews();
     }
 
     /**

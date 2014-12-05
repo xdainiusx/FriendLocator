@@ -32,10 +32,22 @@ public class Friend implements Comparable<Friend>{
      * @param email
      */
     public Friend(String id, String firstName, String lastName, String email) {
-        this.objectId = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
+        if(objectId==null)
+            this.objectId = "";
+        else
+            this.objectId = id;
+        if(firstName==null)
+            this.firstName = "";
+        else
+            this.firstName = firstName;
+        if(lastName==null)
+            this.lastName = "";
+        else
+            this.lastName = lastName;
+        if(email==null)
+            this.email = "";
+        else
+            this.email = email;
 
     }
 
