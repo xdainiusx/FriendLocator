@@ -1,37 +1,84 @@
 package me.dainius.friendlocator;
 
+import android.util.Log;
+import com.parse.ParseException;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+
 /**
  * Friend Model
  */
 public class Friend implements Comparable<Friend>{
 
-    private String objectId;
-    private String firstName;
-    private String lastName;
+    private static String MODEL = "Friend";
+    private ParseUser friendUser;
+    private String objectId = null;
+    private String name;
     private String email;
     private String image;
     private String status; // pending, active, declined
-    private Boolean tracking = false;
+    private boolean tracking = false;
+    private boolean isOnline = false;
     private double lastLatitude;
     private double lastLongitude;
 
-
     /**
      * Initializer
-     * @param firstName
-     * @param lastName
+     * @param name
      * @param email
      */
-    public Friend(String id, String firstName, String lastName, String email) {
-        this.objectId = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
+    public Friend(String id, String name, String email) {
+        if(objectId==null)
+            this.objectId = "";
+        else
+            this.objectId = id;
+        if(name==null)
+            this.name = "";
+        else
+            this.name = name;
+        if(email==null)
+            this.email = "";
+        else
+            this.email = email;
+
     }
 
     /**
-     * GETTERS
+     * Initializer
+     * @param email
      */
+    public Friend(String email) {
+        this.email = email;
+        if(this.objectId==null){
+            this.friendUser = this.getUserByEmail(email);
+            if(this.friendUser!=null) {
+                this.objectId = this.friendUser.getObjectId();
+                this.name = this.friendUser.getString("name");
+                this.email = this.friendUser.getEmail();
+                this.isOnline = this.friendUser.getBoolean("isOnline");
+                this.lastLatitude = this.friendUser.getDouble("latitude");
+                this.lastLongitude = this.friendUser.getDouble("longitude");
+            }
+        }
+    }
+
+    /**
+     * getUserByEmail() - Assigns user to this.user so we don't do the same query again
+     * @param emailAddress
+     * @return ParseUser
+     */
+    private ParseUser getUserByEmail(String emailAddress) {
+        ParseUser user;
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo("username", emailAddress);
+        try {
+            user = query.getFirst();
+        } catch (ParseException e) {
+            user = null;
+            Log.d(MODEL, e.getLocalizedMessage());
+        }
+        return user;
+    }
 
     /**
      * getId() - getter
@@ -42,19 +89,11 @@ public class Friend implements Comparable<Friend>{
     }
 
     /**
-     * getFirstName() - getter
-     * @return String firstName
+     * getName() - getter
+     * @return String name
      */
-    public String getFirstName() {
-        return this.firstName;
-    }
-
-    /**
-     * getLastName() - getter
-     * @return String lastName
-     */
-    public String getLastName() {
-        return this.lastName;
+    public String getName() {
+        return this.name;
     }
 
     /**
@@ -77,8 +116,16 @@ public class Friend implements Comparable<Friend>{
      * isTrackingEnabled() - getter
      * @return
      */
-    public Boolean isTrackingEnabled() {
+    public boolean isTrackingEnabled() {
         return this.tracking;
+    }
+
+    /**
+     * isOnline() - getter
+     * @return
+     */
+    public boolean isOnline() {
+        return this.isOnline;
     }
 
     /**
@@ -86,15 +133,11 @@ public class Friend implements Comparable<Friend>{
      * @return double [] - [0]=latitude, [1]=longitude
      */
     public double[] getCoordinateArray() {
-        double[] coordinates = new double[2];
-        coordinates[1] = this.lastLatitude;
-        coordinates[0] = this.lastLongitude;
-        return coordinates;
+            double[] coordinates = new double[2];
+            coordinates[1] = this.lastLatitude;
+            coordinates[0] = this.lastLongitude;
+            return coordinates;
     }
-
-    /**
-     * SETTERS
-     */
 
     /**
      * enableTracking() - enable friend tracking
@@ -126,7 +169,15 @@ public class Friend implements Comparable<Friend>{
      * @return int
      */
     public int compareTo(Friend compareFriend) {
-        return this.firstName.compareTo(compareFriend.firstName);
+        return this.name.compareTo(compareFriend.name);
+    }
+
+    /**
+     * toString()
+     * @return String
+     */
+    public String toString() {
+        return this.getName() + ": " + this.getEmail();
     }
 
 }

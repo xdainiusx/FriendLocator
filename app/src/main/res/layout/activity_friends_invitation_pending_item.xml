@@ -48,7 +48,6 @@
                     android:layout_width="65dip"
                     android:textColor="@color/white"
                     android:text="@string/button_accept"
-                    android:onClick="onAcceptClick"
                     android:clickable="true"
                     android:background="@color/green"
                     android:layout_marginRight="10dp"
@@ -63,7 +62,6 @@
                     android:layout_width="65dip"
                     android:textColor="@color/white"
                     android:text="@string/button_decline"
-                    android:onClick="onDeclineClick"
                     android:clickable="true"
                     android:background="@color/red_dark"
                 />

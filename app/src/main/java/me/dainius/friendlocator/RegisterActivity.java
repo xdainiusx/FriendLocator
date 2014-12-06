@@ -100,6 +100,9 @@ public class RegisterActivity extends Activity {
             user.setPassword(password);
             user.setEmail(emailAddress);
             user.put("name", name);
+            user.put("isOnline", true);
+//            user.put("latitude", 0.0);
+//            user.put("longitude", 0.0);
 
             user.signUpInBackground(new SignUpCallback() {
                 public void done(ParseException e) {
@@ -147,10 +150,6 @@ public class RegisterActivity extends Activity {
      */
     boolean isEmailValid(CharSequence email) {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
-    }
-
-    private void registerUser() {
-
     }
 
 }

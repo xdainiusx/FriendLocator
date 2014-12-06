@@ -64,13 +64,13 @@ public class LoginActivity extends Activity {
             ParseUser.logInInBackground(username, password, new LogInCallback() {
                 @Override
                 public void done(ParseUser user, ParseException e) {
-                    if (e != null) {
-                        toastIt(e.getLocalizedMessage());
-                    } else {
-                        Intent intent = new Intent(LoginActivity.this, Dispatcher.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
+                if (e != null) {
+                    toastIt(e.getLocalizedMessage());
+                } else {
+                    Intent intent = new Intent(LoginActivity.this, Dispatcher.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                }
                 }
             });
         }
