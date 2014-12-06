@@ -26,6 +26,7 @@ public class InvitationPendingListViewAdapter extends ArrayAdapter<String> {
         super(context, R.layout.activity_friends_invitation_pending_item, pendingInvites);
         this.context = context;
         this.pendingInvites = pendingInvites;
+        this.setNotifyOnChange(true);
     }
 
     /**

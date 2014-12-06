@@ -6,6 +6,9 @@ import android.content.Context;
 import com.parse.Parse;
 import com.parse.ParseObject;
 
+/**
+ * App - Called before any Activity
+ */
 public class App extends Application {
 
     private static Context context;
@@ -18,6 +21,9 @@ public class App extends Application {
         context = this;
     }
 
+    /**
+     * onCreate()
+     */
     @Override
     public void onCreate() {
         super.onCreate();
@@ -29,7 +35,7 @@ public class App extends Application {
 
     /**
      * getAppContext()
-     * @return
+     * @return Context
      */
     public static Context getAppContext() {
         return App.context;

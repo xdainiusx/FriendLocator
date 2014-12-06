@@ -48,9 +48,7 @@ public class ListViewAdapter extends ArrayAdapter<Friend> {
 
         TextView textViewFriendName = (TextView) rowView.findViewById(R.id.friendName);
         if(friends[position]!=null)
-            textViewFriendName.setText(friends[position].getFirstName() + " " + friends[position].getLastName());
-        else
-            textViewFriendName.setText("No friends found.");
+            textViewFriendName.setText(friends[position].getName());
         TextView textViewFriendEmail = (TextView) rowView.findViewById(R.id.friendEmail);
         if(friends[position]!=null)
             textViewFriendEmail.setText(friends[position].getEmail());

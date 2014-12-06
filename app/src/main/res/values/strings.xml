@@ -54,5 +54,8 @@
     <string name="button_accept">Accept</string>
     <string name="button_decline">Decline</string>
 
+    <!-- Views -->
+    <string name="no_friends_found">No friends found.</string>
+
 
 </resources>
