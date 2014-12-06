@@ -130,39 +130,17 @@ public class FriendsInvitationPendingActivity extends Activity {
 
         @Override
         public void onClick(View view) {
-            final View v = view;
-            final int position = pendingInvitesListView.getPositionForView((View) v.getParent());
-
-
-
-            Log.d(ACTIVITY, "Accept clicked, row: " + position);
+            //final View v = view;
+            int position = pendingInvitesListView.getPositionForView((View) view.getParent());
 
             String email = (String)pendingInvitesListView.getAdapter().getItem(position);
-
-            Log.d(ACTIVITY, "Friends email clicked: " + email);
-
             acceptInvitation(email);
 
-            for(int i=0; i< pendingInvites.size(); i++){
-                Log.d(ACTIVITY, pendingInvites.get(i).toString());
-            }
-
-            v.animate().setDuration(2000).alpha(0)
-                    .withEndAction(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.d(ACTIVITY, "Inside Animate 2000");
-                            pendingInvites.remove(position);
-                            v.setAlpha(1);
-                            //adapter.notifyDataSetChanged();
-                        }
-                    });
-
-//            pendingInvites.remove(position);
-//            adapter.notifyDataSetChanged();
-
+            View parent = (View)((View)((View) view.getParent()).getParent()).getParent();
+            parent.setVisibility(View.GONE);
 
         }
+
     };
 
     /**
@@ -171,14 +149,14 @@ public class FriendsInvitationPendingActivity extends Activity {
     public View.OnClickListener declineClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            final int position = pendingInvitesListView.getPositionForView((View) view.getParent());
-            Log.d(ACTIVITY, "Decline clicked, row: " + position);
+            final View v = view;
+            final int position = pendingInvitesListView.getPositionForView((View) v.getParent());
 
             String email = (String)pendingInvitesListView.getAdapter().getItem(position);
-
-            Log.d(ACTIVITY, email);
-
             declineInvitation(email);
+
+            View parent = (View)((View)((View) view.getParent()).getParent()).getParent();
+            parent.setVisibility(View.GONE);
         }
     };
 
@@ -190,8 +168,6 @@ public class FriendsInvitationPendingActivity extends Activity {
         Log.d(ACTIVITY, "ACCEPT");
         this.saveToFriends(this.getUserByEmail(email), ACCEPTED);
         this.changeFriendsInvitationsStatusTo(this.getUserByEmail(email), ParseUser.getCurrentUser().getEmail(), ACCEPTED);
-        //this.clearRow();
-        this.adapter.notifyDataSetChanged();
         this.toastIt("Friend invitation accepted.");
     }
 
@@ -251,7 +227,6 @@ public class FriendsInvitationPendingActivity extends Activity {
         try {
             friendInvitation = query.getFirst();
             Log.d(ACTIVITY, "INVITER: " + friendInvitation.getUser());
-            //friendInvitation.put("status", status);
             friendInvitation.setStatus(status);
             friendInvitation.saveInBackground(new SaveCallback() {
                 @Override
@@ -268,11 +243,6 @@ public class FriendsInvitationPendingActivity extends Activity {
             Log.d(ACTIVITY, e.getLocalizedMessage());
         }
 
-    }
-
-
-    private void clearRow() {
-        this.pendingInvitesListView.invalidateViews();
     }
 
     /**
@@ -328,7 +298,7 @@ public class FriendsInvitationPendingActivity extends Activity {
      */
     private void toastIt(String message) {
         Log.d(ACTIVITY, message);
-        Toast t = Toast.makeText(getApplicationContext(), this.capitalizeString(message), Toast.LENGTH_LONG);
+        Toast t = Toast.makeText(getApplicationContext(), this.capitalizeString(message), Toast.LENGTH_SHORT);
         t.setGravity(Gravity.CENTER, 0, 0);
         t.show();
     }

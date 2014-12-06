@@ -62,5 +62,25 @@
         android:layout_height="fill_parent">
     </ListView>
 
+    <RelativeLayout
+        android:id="@+id/noFriends"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center"
+            android:fontFamily="sans-serif-light"
+            android:textSize="22dip"
+            android:textColor="@color/grey"
+            android:text="@string/no_friends_found"
+            android:background="@color/white"
+            />
+
+    </RelativeLayout>
+
+
+
 
 </LinearLayout>

@@ -1,7 +1,6 @@
 package me.dainius.friendlocator;
 
 import android.util.Log;
-
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -14,8 +13,7 @@ public class Friend implements Comparable<Friend>{
     private static String MODEL = "Friend";
     private ParseUser friendUser;
     private String objectId = null;
-    private String firstName;
-    private String lastName;
+    private String name;
     private String email;
     private String image;
     private String status; // pending, active, declined
@@ -24,26 +22,20 @@ public class Friend implements Comparable<Friend>{
     private double lastLatitude;
     private double lastLongitude;
 
-
     /**
      * Initializer
-     * @param firstName
-     * @param lastName
+     * @param name
      * @param email
      */
-    public Friend(String id, String firstName, String lastName, String email) {
+    public Friend(String id, String name, String email) {
         if(objectId==null)
             this.objectId = "";
         else
             this.objectId = id;
-        if(firstName==null)
-            this.firstName = "";
+        if(name==null)
+            this.name = "";
         else
-            this.firstName = firstName;
-        if(lastName==null)
-            this.lastName = "";
-        else
-            this.lastName = lastName;
+            this.name = name;
         if(email==null)
             this.email = "";
         else
@@ -61,7 +53,7 @@ public class Friend implements Comparable<Friend>{
             this.friendUser = this.getUserByEmail(email);
             if(this.friendUser!=null) {
                 this.objectId = this.friendUser.getObjectId();
-                this.firstName = this.friendUser.getString("name");
+                this.name = this.friendUser.getString("name");
                 this.email = this.friendUser.getEmail();
                 this.isOnline = this.friendUser.getBoolean("isOnline");
                 this.lastLatitude = this.friendUser.getDouble("latitude");
@@ -89,10 +81,6 @@ public class Friend implements Comparable<Friend>{
     }
 
     /**
-     * GETTERS
-     */
-
-    /**
      * getId() - getter
      * @return int id
      */
@@ -101,19 +89,11 @@ public class Friend implements Comparable<Friend>{
     }
 
     /**
-     * getFirstName() - getter
-     * @return String firstName
+     * getName() - getter
+     * @return String name
      */
-    public String getFirstName() {
-        return this.firstName;
-    }
-
-    /**
-     * getLastName() - getter
-     * @return String lastName
-     */
-    public String getLastName() {
-        return this.lastName;
+    public String getName() {
+        return this.name;
     }
 
     /**
@@ -160,10 +140,6 @@ public class Friend implements Comparable<Friend>{
     }
 
     /**
-     * SETTERS
-     */
-
-    /**
      * enableTracking() - enable friend tracking
      */
     public void enableTracking() {
@@ -193,7 +169,15 @@ public class Friend implements Comparable<Friend>{
      * @return int
      */
     public int compareTo(Friend compareFriend) {
-        return this.firstName.compareTo(compareFriend.firstName);
+        return this.name.compareTo(compareFriend.name);
+    }
+
+    /**
+     * toString()
+     * @return String
+     */
+    public String toString() {
+        return this.getName() + ": " + this.getEmail();
     }
 
 }
