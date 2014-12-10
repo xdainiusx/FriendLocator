@@ -76,7 +76,7 @@
                 android:textColor="@color/black"
                 android:textSize="24sp"
                 android:fontFamily="sans-serif-light"
-                android:text=""
+                android:text="No connection to friend!"
                 />
 
         </LinearLayout>

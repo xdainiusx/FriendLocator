@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -28,6 +29,19 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.ParseACL;
+import com.parse.ParseException;
+import com.parse.ParseInstallation;
+import com.parse.ParsePush;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Map Activity
@@ -35,13 +49,21 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapActivity extends Activity {
 
     private static String ACTIVITY = "MapActivity";
+    private static double DEFAULT_DISTANCE = 10000.0;
+    private static int PENDING = 1;
+    private static int CONNECTED = 2;
+    private static int DECLINED = 3;
     Context mapContext;
     GoogleMap googleMap;
     LocationManager locationManager;
     Location oldLocation;
     Location friendLocation = null;
     TextView distanceTextView;
-    private String friendID = null;
+    private String userEmail = null;
+    private String friendEmail = null;
+    private String friendName = null;
+    private String invitorEmail = null;
+    private boolean cancelledConnection = false;
 
     /**
      * onCreate()
@@ -51,33 +73,137 @@ public class MapActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_map);
+        this.userEmail = ParseUser.getCurrentUser().getEmail();
         createMapView();
         Bundle extras = this.getIntent().getExtras();
         if(extras != null) {
-            this.friendID = extras.getString("FriendID");
-            Log.d(ACTIVITY, "Friend ID: " + this.friendID);
-        }
+            this.friendEmail = extras.getString("FriendEmail");
+            this.friendName = extras.getString("FriendName");
+            Log.d(ACTIVITY, "Friend Email: " + this.friendEmail);
+            Log.d(ACTIVITY, "Friend Name: " + this.friendName);
 
-        if(this.friendID!=null) {
-            /**
-             * Alert if invite to connect pending
-             */
-            AlertDialog alert = new AlertDialog.Builder(MapActivity.this).create();
-            //alert.setTitle("Connect with " + friend.getFirstName() + " " + friend.getLastName());
-            alert.setTitle("Connection with " + this.friendID + " Gui Boratto is pending!");
-            alert.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Log.d(ACTIVITY, "Cancel pressed");
-                }
-            });
-            alert.show();
+            String invitor = extras.getString("invitor");
+            Log.d(ACTIVITY, "INVITOR EMAIL: " + invitor);
+            if(invitor!=null) {
+                this.invitorEmail = invitor;
+                //this.executeConnection(invitor);
+                this.showAlert(this.invitorEmail);
+            }
+        }
+    }
+
+    /**
+     * showAlert()
+     * @param invitorEmail
+     */
+    private void showAlert(final String invitorEmail) {
+
+        ParseUser invitorUser = this.getUserByEmail(invitorEmail);
+
+        /**
+         * Alert on friend click
+         */
+        AlertDialog alert = new AlertDialog.Builder(MapActivity.this).create();
+        alert.setTitle("Connect with " + invitorUser.get("name") + "?");
+
+        alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "Yes pressed");
+                executeConnection(invitorEmail);
+                sendPushNotificationReply(invitorEmail, CONNECTED);
+                mapConnectionView();
+            }
+        });
+        alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "No pressed");
+                deleteConnection(invitorEmail);
+                sendPushNotificationReply(invitorEmail, DECLINED);
+            }
+        });
+        alert.show();
+    }
+
+    /**
+     * onResume()
+     */
+    protected void onResume() {
+        super.onResume();
+        Log.d(ACTIVITY, "onResume()");
+        this.mapConnectionView();
+    }
+
+    /**
+     * mapConnectionView()
+     */
+    private void mapConnectionView() {
+        if(cancelledConnection) {
+            Log.d(ACTIVITY, "Connection was cancelled!");
+        }
+        else {
+            if (this.invitorEmail != null) {
+                Log.d(ACTIVITY, "Connected to friend!!!");
+            } else if (this.friendEmail != null && this.alreadyConnected(this.userEmail, this.friendEmail)) {
+                Log.d(ACTIVITY, "Already connected to friend! Do not show alert.");
+            } else if (this.friendEmail != null && this.friendName != null) {
+                /**
+                 * Alert if invite to connect pending
+                 */
+                AlertDialog alert = new AlertDialog.Builder(MapActivity.this).create();
+                alert.setTitle("Connection with " + this.friendName + " is pending!");
+                alert.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.d(ACTIVITY, "Cancel pressed");
+                        deleteConnection(friendEmail);
+                        cancelledConnection = true;
+                        Intent mainIntent = new Intent(MapActivity.this, MainActivity.class);
+                        mainIntent.putExtra("defaultTab", 1);
+                        startActivity(mainIntent);
+                    }
+                });
+                alert.setCanceledOnTouchOutside(false);
+                alert.show();
+                this.connectFriends(this.friendEmail);
+            } else if (this.friendEmail != null) {
+                /**
+                 * Alert if invite to connect pending
+                 */
+                AlertDialog alert = new AlertDialog.Builder(MapActivity.this).create();
+                alert.setTitle("Connection with " + this.friendEmail + " is pending!");
+                alert.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.d(ACTIVITY, "Cancel pressed");
+                        deleteConnection(friendEmail);
+                        cancelledConnection = true;
+                        Intent mainIntent = new Intent(MapActivity.this, MainActivity.class);
+                        mainIntent.putExtra("defaultTab", 1);
+                        startActivity(mainIntent);
+                    }
+                });
+                alert.show();
+                this.connectFriends(this.friendEmail);
+            } else {
+                Log.d(ACTIVITY, "Friend Email is not found!");
+
+            }
+            cancelledConnection = false;
         }
 
 
         this.distanceTextView = (TextView) findViewById(R.id.distanceTextView);
 
-        this.friendLocation = this.getFriendLocation();
+        if(this.friendEmail!=null) {
+            this.friendLocation = this.getFriendLocation(this.friendEmail);
+        }
+
+        if(this.activeOrPendingConnection()) {
+            Log.d(ACTIVITY, "Active or Pending connection!");
+        }
 
         //addMarker();
 
@@ -109,86 +235,436 @@ public class MapActivity extends Activity {
 
             Log.d(ACTIVITY, "CURRENT LOCATION: " + location);
 
-            this.addMarker(this.friendLocation);
-            double distance = location.distanceTo(this.friendLocation);
-            Log.d(ACTIVITY, "DISTANCE TO FRIEND: " + this.roundDistance(distance));
+            if(this.friendLocation!=null) {
+                this.addMarker(this.friendLocation);
+                double distance = location.distanceTo(this.friendLocation);
+                Log.d(ACTIVITY, "DISTANCE TO FRIEND: " + this.roundDistance(distance));
+                int zoomLevel = this.getZoom(distance);
+                CameraPosition cameraPosition =
+                        new CameraPosition.Builder().target(
+                                new LatLng(location.getLatitude(), location.getLongitude())
+                        ).zoom(zoomLevel).build();
 
-            int zoomLevel = this.getZoom(distance);
+                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                googleMap.getUiSettings().setCompassEnabled(true);
 
-            CameraPosition cameraPosition =
-                    new CameraPosition.Builder().target(
-                        new LatLng(location.getLatitude(), location.getLongitude())
-                    ).zoom(zoomLevel).build();
+                /**
+                 * Location listener - listens for location updates
+                 */
+                LocationListener locationListener = new LocationListener() {
 
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-            googleMap.getUiSettings().setCompassEnabled(true);
+                    public void onStatusChanged(String provider, int status, Bundle extras) { }
 
-            /**
-             * Location listener - listens for location updates
-             */
-            LocationListener locationListener = new LocationListener() {
+                    public void onProviderEnabled(String provider) {}
 
-                public void onStatusChanged(String provider, int status, Bundle extras) { }
-
-                public void onProviderEnabled(String provider) {}
-
-                public void onProviderDisabled(String provider) {
-                    Toast.makeText(MapActivity.this,
-                            "GPS disabled: " + provider, Toast.LENGTH_SHORT).show();
-                }
-
-                public void onLocationChanged(Location location) {
-
-                    Log.d(ACTIVITY, "Location changed");
-                    double distance = location.distanceTo(getFriendLocation());
-
-                    int zoomLevel = getZoom(distance);
-
-                    CameraPosition cameraPosition =
-                            new CameraPosition.Builder().target(
-                                    new LatLng(location.getLatitude(), location.getLongitude())
-                            ).zoom(zoomLevel).build();
-
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                    googleMap.getUiSettings().setCompassEnabled(true);
-
-                    double roundedDistance = roundDistance(distance);
-                    String distanceLabel = null;
-                    if(roundedDistance>1000){
-                        distanceLabel = roundDistance(roundedDistance/1000) + " km";
-                    }
-                    else {
-                        distanceLabel = roundedDistance + " meters";
+                    public void onProviderDisabled(String provider) {
+                        Toast.makeText(MapActivity.this,
+                                "GPS disabled: " + provider, Toast.LENGTH_SHORT).show();
                     }
 
-                    Log.d(ACTIVITY, "DISTANCE TO FRIEND: " + distanceLabel);
+                    public void onLocationChanged(Location location) {
 
-                    distanceTextView.setText(distanceLabel);
+                        Log.d(ACTIVITY, "Location changed");
+                        double distance = location.distanceTo(getFriendLocation(friendEmail));
 
-                }
-            };
-            long minTime = 2 * 1000; // Minimum time interval for update in seconds map
-            long minDistance = 1;    // Min distance in meters to update
-            this.locationManager.requestLocationUpdates(provider, minTime, minDistance, locationListener);
+                        int zoomLevel = getZoom(distance);
 
+                        CameraPosition cameraPosition =
+                                new CameraPosition.Builder().target(
+                                        new LatLng(location.getLatitude(), location.getLongitude())
+                                ).zoom(zoomLevel).build();
+
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                        googleMap.getUiSettings().setCompassEnabled(true);
+
+                        double roundedDistance = roundDistance(distance);
+                        String distanceLabel = null;
+                        if(roundedDistance>1000){
+                            distanceLabel = roundDistance(roundedDistance/1000) + " km";
+                        }
+                        else {
+                            distanceLabel = roundedDistance + " meters";
+                        }
+
+                        Log.d(ACTIVITY, "DISTANCE TO FRIEND: " + distanceLabel);
+
+                        distanceTextView.setText(distanceLabel);
+
+                    }
+                };
+                long minTime = 2 * 1000; // Minimum time interval for update in seconds map
+                long minDistance = 1;    // Min distance in meters to update
+                this.locationManager.requestLocationUpdates(provider, minTime, minDistance, locationListener);
+            }
+            else {
+                Log.d(ACTIVITY, "Friend location unknown!");
+                int zoomLevel = this.getZoom(DEFAULT_DISTANCE);
+                CameraPosition cameraPosition =
+                        new CameraPosition.Builder().target(
+                                new LatLng(location.getLatitude(), location.getLongitude())
+                        ).zoom(zoomLevel).build();
+
+                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                googleMap.getUiSettings().setCompassEnabled(true);
+            }
         }
         else if (status == ConnectionResult.SERVICE_MISSING ||
-                 status == ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED ||
-                 status == ConnectionResult.SERVICE_DISABLED) {
+                status == ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED ||
+                status == ConnectionResult.SERVICE_DISABLED) {
             Dialog dialog = GooglePlayServicesUtil.getErrorDialog(status, this, 1);
             dialog.show();
         }
     }
 
     /**
+     * executeConnection()
+     * @param email
+     */
+    private void executeConnection(String email) {
+        Log.d(ACTIVITY, "Email received " + email);
+        this.friendEmail = email;
+
+        ActiveConnection activeConnection = null;
+        ArrayList<String> emailList = new ArrayList<String>();
+        ArrayList<String> foundUsers = new ArrayList<String>();
+        ParseQuery<ActiveConnection> query = ParseQuery.getQuery("ActiveConnection");
+        query.whereEqualTo("invitorEmail", email);
+        query.whereEqualTo("friendEmail", ParseUser.getCurrentUser().getEmail());
+
+        try {
+            Log.d(ACTIVITY, "Will try to find users to connect.");
+
+            activeConnection = query.getFirst();
+            if(activeConnection!=null) {
+                activeConnection.setStatus(CONNECTED);
+                activeConnection.saveInBackground(new SaveCallback() {
+                    @Override
+                    public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "Active connection saved to ActiveConnection table.");
+                    } else {
+                        Log.d(ACTIVITY, "Error saving Active connection: " + e);
+                    }
+                    }
+                });
+                Log.d(ACTIVITY, "Status saved in the background.");
+            }
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * alreadyConnected()
+     * @param userEmail
+     * @param friendEmail
+     * @return boolean
+     */
+    private boolean alreadyConnected(String userEmail, String friendEmail) {
+
+        if(this.areFriendsInConnection(userEmail, friendEmail, CONNECTED)) {
+            return true;
+        }
+        else if(this.areFriendsInConnection(friendEmail, userEmail, CONNECTED)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * deleteConnection()
+     * @param email
+     */
+    private void deleteConnection(String email) {
+        Log.d(ACTIVITY, "Email received " + email);
+        this.friendEmail = email;
+
+        ActiveConnection activeConnection = null;
+        ArrayList<String> emailList = new ArrayList<String>();
+        ArrayList<String> foundUsers = new ArrayList<String>();
+        ParseQuery<ActiveConnection> query = ParseQuery.getQuery("ActiveConnection");
+        query.whereEqualTo("invitorEmail", email);
+        query.whereEqualTo("friendEmail", ParseUser.getCurrentUser().getEmail());
+
+        try {
+            Log.d(ACTIVITY, "Will try to delete object.");
+
+            activeConnection = query.getFirst();
+            if(activeConnection!=null) {
+                activeConnection.deleteInBackground();
+                Log.d(ACTIVITY, "Object deleted.");
+            }
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+
+        // Delete the other way
+        query.whereEqualTo("invitorEmail", ParseUser.getCurrentUser().getEmail());
+        query.whereEqualTo("friendEmail", email);
+
+        try {
+            Log.d(ACTIVITY, "Will try to delete object.");
+
+            activeConnection = query.getFirst();
+            if(activeConnection!=null) {
+                activeConnection.deleteInBackground();
+                Log.d(ACTIVITY, "Object deleted.");
+            }
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * connectFriends()
+     * @param email
+     */
+    private void connectFriends(String email) {
+
+        if(email!=null) {
+            this.sendPushNotification(email);
+        }
+
+        boolean connected = this.areFriendsInConnection(this.userEmail, this.friendEmail, CONNECTED);
+        boolean pending = this.areFriendsInConnection(this.userEmail, this.friendEmail, PENDING);
+
+        if(this.friendLocation!=null) {
+            try {
+                Log.d(ACTIVITY, "Friends Location LAT: " + this.friendLocation.getLatitude());
+                Log.d(ACTIVITY, "Friends Location LON: " + this.friendLocation.getLongitude());
+            } catch (Exception e) {
+                Log.d(ACTIVITY, "ERROR: " + e);
+            }
+        }
+
+        if(connected) {
+            Log.d(ACTIVITY, "Friends in active connection!");
+        }
+        else {
+            // reverse users
+            connected = this.areFriendsInConnection(this.friendEmail, this.userEmail, CONNECTED);
+            if(connected) {
+                Log.d(ACTIVITY, "Reverse friends in active connection!");
+            }
+        }
+        if(pending) {
+            Log.d(ACTIVITY, "friends in pending connection!");
+        }
+        else {
+            // reverse users
+            pending = this.areFriendsInConnection(this.friendEmail, this.userEmail, PENDING);
+            if(pending) {
+                Log.d(ACTIVITY, "Reverse friends in pending connection!");
+            }
+        }
+
+        if(!connected && !pending) {
+            ActiveConnection activeConnection = new ActiveConnection();
+            activeConnection.setInvitorEmail(this.userEmail);
+            activeConnection.setFriendEmail(this.friendEmail);
+            activeConnection.setStatus(PENDING);
+
+            ParseACL connectionAcl = new ParseACL();
+            connectionAcl.setPublicReadAccess(true);
+            connectionAcl.setPublicWriteAccess(true);
+            activeConnection.setACL(connectionAcl);
+
+            activeConnection.saveInBackground(new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "ActiveConnection saved to ActiveConnection table.");
+                    } else {
+                        Log.d(ACTIVITY, "Error saving activeConnection to ActiveConnection table.");
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * sendPushNotification()
+     * @param email
+     */
+    private void sendPushNotification(String email) {
+
+        ParseQuery userQuery = ParseUser.getQuery();
+        userQuery.whereEqualTo("email", email);
+
+        ParseQuery pushQuery = ParseInstallation.getQuery();
+        pushQuery.whereMatchesQuery("user", userQuery);
+
+        // Send push notification to query
+        ParsePush push = new ParsePush();
+        push.setQuery(pushQuery);
+
+        // Setting message with user information
+        String userName = ParseUser.getCurrentUser().getString("name");
+
+        String message = userName + " would like to connect with you.";
+
+        JSONObject data = null;
+        try {
+            data = new JSONObject("{\"alert\": \"" + message + "\",\"badge\": \"1\",\"invitor\": \"" + this.userEmail +"\", \"connectionStatus\": \"" + 0 + "\"}");
+        } catch (JSONException e) {
+            Log.d(ACTIVITY, "JSON ERROR: "+e);
+
+        }
+
+        push.setData(data);
+
+        push.sendInBackground();
+        Log.d(ACTIVITY, "Push Notification sent.");
+    }
+
+    /**
+     * sendPushNotificationReply()
+     * @param email
+     * @param status
+     */
+    private void sendPushNotificationReply(String email, int status) {
+
+        ParseQuery userQuery = ParseUser.getQuery();
+        userQuery.whereEqualTo("email", email);
+
+        ParseQuery pushQuery = ParseInstallation.getQuery();
+        pushQuery.whereMatchesQuery("user", userQuery);
+
+        // Send push notification to query
+        ParsePush push = new ParsePush();
+        push.setQuery(pushQuery);
+
+        JSONObject data = null;
+        try {
+            data = new JSONObject("{\"invitor\": \"" + this.userEmail +"\", \"connectionStatus\": \"" + status + "\"}");
+        } catch (JSONException e) {
+            Log.d(ACTIVITY, "JSON ERROR: "+e);
+
+        }
+
+        push.setData(data);
+
+        push.sendInBackground();
+        Log.d(ACTIVITY, "Push Notification sent.");
+    }
+
+    /**
+     * activeOrPendingConnection()
+     * @return boolean
+     */
+    private boolean activeOrPendingConnection() {
+        this.userEmail = ParseUser.getCurrentUser().getEmail();
+        Log.d(ACTIVITY, "This user email is " + this.userEmail);
+        boolean connected = this.areFriendsInConnection(this.userEmail, null, CONNECTED);
+        boolean pending = this.areFriendsInConnection(this.userEmail, null, PENDING);
+        if(connected) {
+            Log.d(ACTIVITY, "Friends in active connection!");
+        }
+        else {
+            // reverse
+            connected = this.areFriendsInConnection(null, userEmail, CONNECTED);
+            if(connected) {
+                Log.d(ACTIVITY, "Reverse friends in active connection!");
+            }
+        }
+
+        if(pending) {
+            Log.d(ACTIVITY, "Friends in pending connection!");
+        }
+        else {
+            // reverse
+            pending = this.areFriendsInConnection(null, userEmail, PENDING);
+            if(pending) {
+                Log.d(ACTIVITY, "Reverse friends in pending connection!");
+            }
+        }
+
+        if(connected || pending) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * areFriendsInConnection()
+     * @param userEmail
+     * @param friendEmail
+     * @param status
+     * @return boolean
+     */
+    private boolean areFriendsInConnection(String userEmail, String friendEmail, int status) {
+
+        List<ActiveConnection> activeConnectionList = null;
+        ArrayList<String> emailList = new ArrayList<String>();
+        ArrayList<String> foundUsers = new ArrayList<String>();
+        ParseQuery<ActiveConnection> query = ParseQuery.getQuery("ActiveConnection");
+        if(userEmail!=null) {
+            query.whereEqualTo("invitorEmail", userEmail);
+        }
+        if(friendEmail!=null) {
+            query.whereEqualTo("friendEmail", friendEmail);
+        }
+        query.whereEqualTo("status", status);
+        boolean connectionPresent = false;
+
+        try {
+            Log.d(ACTIVITY, "Will try to find users.");
+
+            activeConnectionList = query.find();
+            Log.d(ACTIVITY, "SIZE: "+ activeConnectionList.size());
+            for (ActiveConnection ac : activeConnectionList) {
+                try {
+                    String emailParse = (String)ac.get("invitorEmail");
+                    String friendEmailParse = (String)ac.get("friendEmail");
+                    Log.d(ACTIVITY, "Invitor User Email:   " + emailParse);
+                    Log.d(ACTIVITY, "Friend Email:         " + friendEmailParse);
+                    emailList.add(emailParse);
+                } catch (Exception e) {
+                    Log.d(ACTIVITY, "User parse error! " + e.getLocalizedMessage());
+                }
+            }
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+
+        if(emailList!=null && emailList.size() > 0) {
+            Log.d(ACTIVITY, "Email list size: " + emailList.size());
+            connectionPresent = true;
+        }
+        return connectionPresent;
+    }
+
+    /**
      * getFriendLocation() - gets location of a friend
      * @return
      */
-    private Location getFriendLocation() {
+    private Location getFriendLocation(String email) {
         Location location = new Location(LocationManager.GPS_PROVIDER);
-        location.setLatitude(37.906108);
-        location.setLongitude(-122.510264);
+
+        ParseUser user = this.getUserByEmail(email);
+
+        location.setLatitude((Double)user.get("latitude"));
+        location.setLongitude((Double)user.get("longitude"));
         return location;
+    }
+
+    /**
+     * getUserByEmail()
+     * @param emailAddress
+     * @return ParseUser
+     */
+    private ParseUser getUserByEmail(String emailAddress) {
+        ParseUser user = null;
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo("username", emailAddress);
+        try {
+            user = query.getFirst().fetchIfNeeded();
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        return user;
     }
 
     /**
@@ -319,8 +795,7 @@ public class MapActivity extends Activity {
 
             MarkerOptions marker = new MarkerOptions()
                     .position(new LatLng(lat, lon))
-                    .title("Joe Doe")
-                    //.icon(BitmapDescriptorFactory.fromResource(R.drawable.gps_icon))
+                    .title(this.friendName)
                     .icon(BitmapDescriptorFactory.fromBitmap(bmp))
                     .draggable(true);
 
@@ -334,6 +809,49 @@ public class MapActivity extends Activity {
      */
     public void onConnectionCancelClick(View view) {
         Log.d(ACTIVITY, "onConnectionCancelClick() clicked");
+
+        if(this.friendEmail!=null) {
+
+            String cancelFriendName = null;
+            try {
+                cancelFriendName = (String) this.getUserByEmail(this.friendEmail).get("name");
+            } catch (Exception e) {
+                Log.d(ACTIVITY, "Could not get friend user");
+            }
+
+            /**
+             * Alert on friend click
+             */
+            AlertDialog alert = new AlertDialog.Builder(MapActivity.this).create();
+            if(cancelFriendName!=null) {
+                alert.setTitle("Cancel connection with " + cancelFriendName + "?");
+            }
+            else {
+                alert.setTitle("Cancel connection?");
+            }
+
+            alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Log.d(ACTIVITY, "Yes pressed");
+                    deleteConnection(friendEmail);
+                    cancelledConnection = true;
+                    Intent mainIntent = new Intent(MapActivity.this, MainActivity.class);
+                    mainIntent.putExtra("defaultTab", 1);
+                    startActivity(mainIntent);
+                }
+            });
+            alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Log.d(ACTIVITY, "No pressed");
+
+                }
+            });
+            alert.show();
+
+        }
     }
 
     /**
