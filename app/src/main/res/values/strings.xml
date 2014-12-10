@@ -46,7 +46,7 @@
     <string name="help_title">Help</string>
     <string name="help_subtitle">Get some help how to use the application</string>
     <string name="version_title">Version</string>
-    <string name="version_subtitle">1.0.1</string>
+    <string name="version_subtitle">1.1.0</string>
     <string name="header_activity_pending_invitations">Pending friend invitations</string>
     <string name="invitations_pending">Have Pending Invitations!</string>
 

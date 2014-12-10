@@ -16,12 +16,14 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import com.parse.ParseACL;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -67,7 +69,36 @@ public class FriendsActivity extends Activity {
     }
 
     /**
-     * friendsListView() - moved out of onResume()
+     * onStart()
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    /**
+     * onResume()
+     */
+    protected void onResume() {
+        super.onResume();
+        Log.d(ACTIVITY, "onResume()");
+        // Invitations
+        this.inviterFriends = this.getPendingFriendInvitations();
+        if(this.inviterFriends.size()==0) {
+            View invitationsTab = findViewById(R.id.invitationsTab);
+            invitationsTab.setVisibility(View.GONE);
+        }
+        else {
+            View invitationsTab = findViewById(R.id.invitationsTab);
+            invitationsTab.setVisibility(View.VISIBLE);
+        }
+
+        // Moved to the private function
+        this.friendsListView();
+    }
+
+    /**
+     * friendsListView() - move it to onResume()
      */
     private void friendsListView() {
         this.friendsListView = (ListView) findViewById(android.R.id.list);
@@ -100,65 +131,87 @@ public class FriendsActivity extends Activity {
 
                     Log.d(ACTIVITY, friend.getName() + " clicked");
 
-                    /**
-                     * Alert on friend click
-                     */
-                    AlertDialog alert = new AlertDialog.Builder(FriendsActivity.this).create();
-                    alert.setTitle("Connect with " + friend.getName());
-                    Log.d(ACTIVITY, "Friends Email: " + friend.getEmail());
-                    Log.d(ACTIVITY, "Friends Location: " + friend.getCoordinateArray()[0] + ", " + friend.getCoordinateArray()[1]);
-                    alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Log.d(ACTIVITY, "Yes pressed");
-                            Intent mainIntent = new Intent(FriendsActivity.this, MainActivity.class);
-                            mainIntent.putExtra("defaultTab", 2);
-                            if (getFriendClicked() != null) {
-                                mainIntent.putExtra("FriendID", getFriendClicked().getId());
-                            }
-                            startActivity(mainIntent);
-                        }
-                    });
-                    alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+                    if (friendIsOnline(friend)) {
+                        alertToConnect(friend);
+                    } else {
+                        alertFriendNotOnline(friend);
+                    }
 
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Log.d(ACTIVITY, "No pressed");
-                        }
-                    });
-                    alert.show();
+
                 }
             });
         }
     }
 
     /**
-     * onStart()
+     * alertToConnect()
+     * @param friend
      */
-    @Override
-    protected void onStart() {
-        super.onStart();
+    private void alertToConnect(Friend friend) {
+        /**
+         * Alert on friend click
+         */
+        AlertDialog alert = new AlertDialog.Builder(FriendsActivity.this).create();
+        alert.setTitle("Connect with " + friend.getName());
+        Log.d(ACTIVITY, "Friends Email: " + friend.getEmail());
+        Log.d(ACTIVITY, "Friends Location: " + friend.getCoordinateArray()[0] + ", " + friend.getCoordinateArray()[1]);
+        alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "Yes pressed");
+                Intent mainIntent = new Intent(FriendsActivity.this, MainActivity.class);
+                mainIntent.putExtra("defaultTab", 2);
+                if (getFriendClicked() != null) {
+                    mainIntent.putExtra("FriendEmail", getFriendClicked().getEmail());
+                    mainIntent.putExtra("FriendName", getFriendClicked().getName());
+                }
+                startActivity(mainIntent);
+            }
+        });
+        alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "No pressed");
+            }
+        });
+        alert.show();
     }
 
     /**
-     * onResume()
+     * alertFriendNotOnline()
+     * @param friend
      */
-    protected void onResume() {
-        super.onResume();
-        Log.d(ACTIVITY, "onResume()");
-        // Invitations
-        this.inviterFriends = this.getPendingFriendInvitations();
-        if(this.inviterFriends.size()==0) {
-            View invitationsTab = findViewById(R.id.invitationsTab);
-            invitationsTab.setVisibility(View.GONE);
-        }
-        else {
-            View invitationsTab = findViewById(R.id.invitationsTab);
-            invitationsTab.setVisibility(View.VISIBLE);
+    private void alertFriendNotOnline(Friend friend) {
+        /**
+         * Alert on friend click
+         */
+        AlertDialog alert = new AlertDialog.Builder(FriendsActivity.this).create();
+        alert.setTitle(friend.getName() + " is not currently online.");
+        alert.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "OK pressed");
+            }
+        });
+        alert.show();
+    }
+
+    /**
+     * friendIsOnline()
+     * @param friend
+     * @return Boolean
+     */
+    private Boolean friendIsOnline(Friend friend) {
+        Boolean isOnline = false;
+        try {
+            ParseUser user = this.getUserByEmail(friend.getEmail());
+            isOnline = (Boolean)user.get("isOnline");
+        } catch (Exception e) {
+            Log.d(ACTIVITY, "Error retrieving the user: " + e);
         }
 
-        // Moved to the private function
-        this.friendsListView();
+        return isOnline;
     }
 
     /**
@@ -293,6 +346,62 @@ public class FriendsActivity extends Activity {
     }
 
     /**
+     * userAlreadyInvitedMe()
+     * @param email
+     * @return boolean
+     */
+    private boolean userAlreadyInvitedMe(String email) {
+        boolean invited = false;
+        List<FriendInvitation> emailList = null;
+        ArrayList<String> foundEmails = new ArrayList<String>();
+        ParseQuery<FriendInvitation> query = ParseQuery.getQuery("FriendInvitation");
+        query.whereEqualTo("inviter", email);
+        query.selectKeys(Arrays.asList("user"));
+
+        try {
+            emailList = query.find();
+            for (FriendInvitation o: emailList) {
+                try {
+                    ParseUser user = o.getUser().fetchIfNeeded();
+                    foundEmails.add(user.getEmail());
+                } catch(Exception e) {
+                    Log.d(ACTIVITY, "Could not get FriendInvitation from the database: " + e.getLocalizedMessage());
+                }
+            }
+        } catch (ParseException e) {
+            toastIt(e.getLocalizedMessage());
+        }
+        if(foundEmails.size()!=0){
+            Log.d(ACTIVITY, "FOUND EMAIL: " + foundEmails.get(0));
+            if(foundEmails.contains(email)){
+                invited = true;
+                Log.d(ACTIVITY, "Email in the list: "+email);
+            }
+            else {
+                Log.d(ACTIVITY, "No emails found!");
+            }
+        }
+        else {
+            invited = false;
+            Log.d(ACTIVITY, "Email not in the list");
+        }
+        return invited;
+    }
+
+    /**
+     * isUserMe()
+     * @param email
+     * @return boolean
+     */
+    private boolean isUserMe(String email) {
+        ParseUser me = ParseUser.getCurrentUser();
+        if(me.getEmail().equals(email)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * isUserRegistered() - checks if user is registered with Friend Locator
      * @param emailAddress
      * @return boolean
@@ -329,19 +438,28 @@ public class FriendsActivity extends Activity {
      */
     private void invite(String friendEmail) {
 
-        if(!this.isUserRegistered(friendEmail)){
+        Log.d(ACTIVITY, "EMAIL: " + friendEmail);
+        if(this.isUserMe(friendEmail)) {
+            String message = friendEmail + " is your own email!";
+            toastIt(message);
+        }
+        else if(!this.isUserRegistered(friendEmail)){
             String message = "User with the email address " + friendEmail + " is not registered with Friend Locator!";
             toastIt(message);
         }
-        else if(isUserAlreadyInvited(friendEmail)) {
+        else if(this.isUserAlreadyInvited(friendEmail)) {
             String message = "User with the email address " + friendEmail + " was already invited.";
+            toastIt(message);
+        }
+        else if(this.userAlreadyInvitedMe(friendEmail)) {
+            String message = "User with the email address " + friendEmail + " already invited you.";
+            message += "\n";
+            message += "Please go to Pending Invitations and accept your friend's invitation!";
             toastIt(message);
         }
         else {
             this.saveToFriends(this.friendUser, FriendsActivity.PENDING);
-
             this.saveToFriendInvitation(friendEmail);
-
         }
     }
 
@@ -361,11 +479,11 @@ public class FriendsActivity extends Activity {
         friends.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
-            if (e == null) {
-                Log.d(ACTIVITY, "Friend saved to Friends table.");
-            } else {
-                Log.d(ACTIVITY, "Error saving friend to Friends table.");
-            }
+                if (e == null) {
+                    Log.d(ACTIVITY, "Friend saved to Friends table.");
+                } else {
+                    Log.d(ACTIVITY, "Error saving friend to Friends table.");
+                }
             }
         });
     }
@@ -529,7 +647,7 @@ public class FriendsActivity extends Activity {
                     Friend friend = new Friend(id, name, email);
                     friendsArrayList.add(friend);
                 } catch (Exception e) {
-                    Log.d(ACTIVITY, "User parse error! " + e);
+                    Log.d(ACTIVITY, "User parse error! " + e.getLocalizedMessage());
                 }
             }
             if(friendsArrayList.size()>0) {

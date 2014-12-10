@@ -19,6 +19,7 @@ import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -26,6 +27,7 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.parse.ParseException;
+import com.parse.ParseInstallation;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
@@ -48,7 +50,9 @@ public class MainActivity extends TabActivity implements
 
     private ActionBar actionBar;
     private int defaultTab = -1;
-    private String friendID = null;
+    private String friendEmail = null;
+    private String friendName = null;
+    private String invitor = null;
     public LocationManager locationManager;
     public Location lastKnownLocation;
     private Location currentLocation;
@@ -70,6 +74,10 @@ public class MainActivity extends TabActivity implements
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
+        // Save the current Installation to Parse.
+        ParseInstallation.getCurrentInstallation().put("user",ParseUser.getCurrentUser());
+        ParseInstallation.getCurrentInstallation().saveInBackground();
+
         this.locationRequest = LocationRequest.create();
         this.locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         this.locationRequest.setInterval(UPDATE_INTERVAL);
@@ -84,82 +92,7 @@ public class MainActivity extends TabActivity implements
 
         this.updateDatabase(this.lastKnownLocation);
 
-        Bundle extras = this.getIntent().getExtras();
-        if(extras != null) {
-            this.defaultTab = extras.getInt("defaultTab");
-            Log.d(ACTIVITY, "Default tab: " + this.defaultTab);
 
-            this.friendID = extras.getString("FriendID");
-            Log.d(ACTIVITY, "Friend ID: " + this.friendID);
-        }
-
-        this.goToActivity("Friends", null);
-        if(this.friendID!=null){
-            this.goToActivity("Map", this.friendID);
-        }
-        else{
-            this.goToActivity("Map", null);
-        }
-        this.goToActivity("Settings", null);
-    }
-
-    /**
-     * gotToActivity()
-     * @param activityName
-     * @param friendID - if no ID passed -1
-     */
-    public void goToActivity(String activityName, String friendID) {
-
-        TabHost tabHost = (TabHost)findViewById(android.R.id.tabhost);
-
-        if(activityName.equals("Friends")) {
-            // Friends Tab
-            TabSpec friendsTab = tabHost.newTabSpec("Friends");
-            // Friends Tab Indicator View
-            View friendsTabIndicator = LayoutInflater.from(this).inflate(R.layout.bottom_tab, getTabWidget(), false);
-            ((TextView) friendsTabIndicator.findViewById(R.id.title)).setText("Friends");
-            ((ImageView) friendsTabIndicator.findViewById(R.id.image)).setImageResource(R.drawable.icon_friends_tab);
-            // Add view to friends tab
-            friendsTab.setIndicator(friendsTabIndicator);
-            Intent friendsIntent = new Intent(this, FriendsActivity.class);
-            friendsTab.setContent(friendsIntent);
-            tabHost.addTab(friendsTab);
-        }
-        else if(activityName.equals("Map")) {
-
-            // Map Tab
-            TabSpec mapTab = tabHost.newTabSpec("Map");
-            // Map Tab Indicator View
-            View mapTabIndicator = LayoutInflater.from(this).inflate(R.layout.bottom_tab, getTabWidget(), false);
-            ((TextView) mapTabIndicator.findViewById(R.id.title)).setText("Map");
-            ((ImageView) mapTabIndicator.findViewById(R.id.image)).setImageResource(R.drawable.icon_map_tab);
-            // Add view to map tab
-            mapTab.setIndicator(mapTabIndicator);
-            Intent mapIntent = new Intent(this, MapActivity.class);
-            if(friendID!=null){
-                mapIntent.putExtra("FriendID", friendID);
-            }
-            mapTab.setContent(mapIntent);
-            tabHost.addTab(mapTab);
-        }
-        else if(activityName.equals("Settings")) {
-
-            // Settings Tab
-            TabSpec settingsTab = tabHost.newTabSpec("Settings");
-            // Settings Tab Indicator View
-            View settingsTabIndicator = LayoutInflater.from(this).inflate(R.layout.bottom_tab, getTabWidget(), false);
-            ((TextView) settingsTabIndicator.findViewById(R.id.title)).setText("Settings");
-            ((ImageView) settingsTabIndicator.findViewById(R.id.image)).setImageResource(R.drawable.icon_settings_tab);
-            // Add view to settings tab
-            settingsTab.setIndicator(settingsTabIndicator);
-            Intent settingsIntent = new Intent(this, SettingsActivity.class);
-            settingsTab.setContent(settingsIntent);
-            tabHost.addTab(settingsTab);
-        }
-
-        if(friendID!=null){
-            tabHost.setCurrentTab(1);
-        }
     }
 
     /**
@@ -191,13 +124,7 @@ public class MainActivity extends TabActivity implements
     protected void onResume() {
         super.onResume();
         Log.d(ACTIVITY, "onResume");
-        if(this.sharedPreferences.contains("KEY_UPDATES_ON")) {
-            this.updatesRequested = this.sharedPreferences.getBoolean("KEY_UPDATES_ON", false);
-        }
-        else {
-            this.sharedPreferencesEditor.putBoolean("KEY_UPDATES_ON", false);
-            this.sharedPreferencesEditor.commit();
-        }
+        this.getExtras();
     }
 
     /**
@@ -220,6 +147,111 @@ public class MainActivity extends TabActivity implements
             user.put("isOnline", false);
             user.saveInBackground();
             this.locationClient.disconnect();
+        }
+    }
+
+    /**
+     * getExtras()
+     */
+    private void getExtras() {
+        Bundle extras = this.getIntent().getExtras();
+        if(extras != null) {
+            this.defaultTab = extras.getInt("defaultTab");
+            Log.d(ACTIVITY, "Default tab: " + this.defaultTab);
+
+            this.friendEmail = extras.getString("FriendEmail");
+            Log.d(ACTIVITY, "Friend Email: " + this.friendEmail);
+
+            this.friendName = extras.getString("FriendName");
+            Log.d(ACTIVITY, "Friend Name: " + this.friendName);
+
+            this.invitor = extras.getString("invitor");
+            Log.d(ACTIVITY, "Invitor Name: " + this.invitor);
+        }
+
+        this.goToActivity("Friends", null, null);
+
+        if(this.invitor!=null){
+            goToActivity("Map", null, null);
+        }
+        else if(this.friendEmail!=null && this.friendName!=null){
+            this.goToActivity("Map", this.friendEmail, this.friendName);
+        }
+        else if(this.friendEmail!=null ){
+            this.goToActivity("Map", this.friendEmail, null);
+        }
+        else{
+            this.goToActivity("Map", null, null);
+        }
+        this.goToActivity("Settings", null, null);
+    }
+
+    /**
+     * gotToActivity()
+     * @param activityName
+     * @param friendEmail
+     */
+    public void goToActivity(String activityName, String friendEmail, String friendName) {
+
+        TabHost tabHost = (TabHost)findViewById(android.R.id.tabhost);
+
+        if(activityName.equals("Friends")) {
+            // Friends Tab
+            TabSpec friendsTab = tabHost.newTabSpec("Friends");
+            // Friends Tab Indicator View
+            View friendsTabIndicator = LayoutInflater.from(this).inflate(R.layout.bottom_tab, getTabWidget(), false);
+            ((TextView) friendsTabIndicator.findViewById(R.id.title)).setText("Friends");
+            ((ImageView) friendsTabIndicator.findViewById(R.id.image)).setImageResource(R.drawable.icon_friends_tab);
+            // Add view to friends tab
+            friendsTab.setIndicator(friendsTabIndicator);
+            Intent friendsIntent = new Intent(this, FriendsActivity.class);
+            friendsTab.setContent(friendsIntent);
+            tabHost.addTab(friendsTab);
+        }
+        else if(activityName.equals("Map")) {
+
+            // Map Tab
+            TabSpec mapTab = tabHost.newTabSpec("Map");
+            // Map Tab Indicator View
+            View mapTabIndicator = LayoutInflater.from(this).inflate(R.layout.bottom_tab, getTabWidget(), false);
+            ((TextView) mapTabIndicator.findViewById(R.id.title)).setText("Map");
+            ((ImageView) mapTabIndicator.findViewById(R.id.image)).setImageResource(R.drawable.icon_map_tab);
+            // Add view to map tab
+            mapTab.setIndicator(mapTabIndicator);
+            Intent mapIntent = new Intent(this, MapActivity.class);
+            if(this.invitor!=null){
+                mapIntent.putExtra("invitor", this.invitor);
+            }
+            else if(friendEmail!=null && friendName!=null){
+                mapIntent.putExtra("FriendEmail", friendEmail);
+                mapIntent.putExtra("FriendName", friendName);
+            }
+            else if(friendEmail!=null){
+                mapIntent.putExtra("FriendEmail", friendEmail);
+            }
+            mapTab.setContent(mapIntent);
+            tabHost.addTab(mapTab);
+        }
+        else if(activityName.equals("Settings")) {
+
+            // Settings Tab
+            TabSpec settingsTab = tabHost.newTabSpec("Settings");
+            // Settings Tab Indicator View
+            View settingsTabIndicator = LayoutInflater.from(this).inflate(R.layout.bottom_tab, getTabWidget(), false);
+            ((TextView) settingsTabIndicator.findViewById(R.id.title)).setText("Settings");
+            ((ImageView) settingsTabIndicator.findViewById(R.id.image)).setImageResource(R.drawable.icon_settings_tab);
+            // Add view to settings tab
+            settingsTab.setIndicator(settingsTabIndicator);
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            settingsTab.setContent(settingsIntent);
+            tabHost.addTab(settingsTab);
+        }
+
+        if(this.invitor!=null){
+            tabHost.setCurrentTab(1);
+        }
+        else if(friendEmail!=null){
+            tabHost.setCurrentTab(1);
         }
     }
 
