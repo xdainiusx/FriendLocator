@@ -1,7 +1,10 @@
 package me.dainius.friendlocator;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -58,20 +61,25 @@ public class PasswordRecoveryActivity extends Activity {
         }
 
         if(formIsValid) {
-            ParseUser.requestPasswordResetInBackground(emailAddress, new RequestPasswordResetCallback() {
-                public void done(ParseException e) {
-                    if (e == null) {
-                        String message = "Recovery email was sent to " + emailAddress  + "\n";
-                        toastIt(message);
-                        Intent intent = new Intent(PasswordRecoveryActivity.this, Dispatcher.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    } else {
-                        Log.d(ACTIVITY, "Exception: " + e);
-                        toastIt(e.getLocalizedMessage());
+            if(this.isNetworkAvailable()) {
+                ParseUser.requestPasswordResetInBackground(emailAddress, new RequestPasswordResetCallback() {
+                    public void done(ParseException e) {
+                        if (e == null) {
+                            String message = "Recovery email was sent to " + emailAddress + "\n";
+                            toastIt(message);
+                            Intent intent = new Intent(PasswordRecoveryActivity.this, Dispatcher.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                        } else {
+                            Log.d(ACTIVITY, "Exception: " + e);
+                            toastIt(e.getLocalizedMessage());
+                        }
                     }
-                }
-            });
+                });
+            }
+            else {
+                this.toastIt("Network is unavailable! \nMake sure you are connected to the internet.");
+            }
         }
         else {
             this.toastIt(validationErrorMessage.toString());
@@ -106,6 +114,16 @@ public class PasswordRecoveryActivity extends Activity {
      */
     boolean isEmailValid(CharSequence email) {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
+
+    /**
+     * isNetworkAvailable()
+     * @return boolean
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivitymanager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivitymanager.getActiveNetworkInfo();
+        return networkInfo !=null && networkInfo.isConnected();
     }
 
 }

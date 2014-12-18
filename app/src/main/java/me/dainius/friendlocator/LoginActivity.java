@@ -1,7 +1,10 @@
 package me.dainius.friendlocator;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -22,6 +25,7 @@ public class LoginActivity extends Activity {
     private static String ACTIVITY = "LoginActivity";
     private EditText emailAddress;
     private EditText password;
+    private static Context context;
 
     /**
      * onCreate()
@@ -34,6 +38,13 @@ public class LoginActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_login);
+    }
+
+    public void onResume() {
+        super.onResume();
+        if(!isNetworkAvailable()) {
+            this.toastIt("Network is unavailable! \nMake sure you are connected to the internet.");
+        }
     }
 
     /**
@@ -61,18 +72,23 @@ public class LoginActivity extends Activity {
         }
 
         if(formIsValid) {
-            ParseUser.logInInBackground(username, password, new LogInCallback() {
-                @Override
-                public void done(ParseUser user, ParseException e) {
-                if (e != null) {
-                    toastIt(e.getLocalizedMessage());
-                } else {
-                    Intent intent = new Intent(LoginActivity.this, Dispatcher.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                }
-                }
-            });
+            if(isNetworkAvailable()) {
+                ParseUser.logInInBackground(username, password, new LogInCallback() {
+                    @Override
+                    public void done(ParseUser user, ParseException e) {
+                        if (e != null) {
+                            toastIt(e.getLocalizedMessage());
+                        } else {
+                            Intent intent = new Intent(LoginActivity.this, Dispatcher.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                        }
+                    }
+                });
+            }
+            else {
+                this.toastIt("Network is unavailable! \nMake sure you are connected to the internet.");
+            }
         }
         else {
             this.toastIt(validationErrorMessage.toString());
@@ -109,6 +125,24 @@ public class LoginActivity extends Activity {
         Intent intent = new Intent(this, PasswordRecoveryActivity.class);
         startActivity(intent);
 
+    }
+
+    /**
+     * getActivityContext() - gets activity context, good to use in inner classes
+     * @return Context
+     */
+    public static Context getActivityContext() {
+        return LoginActivity.context;
+    }
+
+    /**
+     * isNetworkAvailable()
+     * @return boolean
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivitymanager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivitymanager.getActiveNetworkInfo();
+        return networkInfo !=null && networkInfo.isConnected();
     }
 
 }

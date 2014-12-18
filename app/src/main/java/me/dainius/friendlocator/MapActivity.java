@@ -3,9 +3,11 @@ package me.dainius.friendlocator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -14,6 +16,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -49,6 +52,7 @@ import java.util.List;
 public class MapActivity extends Activity {
 
     private static String ACTIVITY = "MapActivity";
+    private static String MARKER_KEY = "ABCDEFGHIJKLMN";
     private static double DEFAULT_DISTANCE = 10000.0;
     private static int PENDING = 1;
     private static int CONNECTED = 2;
@@ -63,7 +67,28 @@ public class MapActivity extends Activity {
     private String friendEmail = null;
     private String friendName = null;
     private String invitorEmail = null;
+    private Boolean pushReceived = null;
     private boolean cancelledConnection = false;
+
+
+
+    LocationService locationService;
+    boolean isBound = false;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            LocationService.LocalLocationBinder binder = (LocationService.LocalLocationBinder) service;
+            locationService = binder.getService();
+            isBound = true;
+        }
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            isBound = false;
+        }
+
+    };
 
     /**
      * onCreate()
@@ -79,15 +104,22 @@ public class MapActivity extends Activity {
         if(extras != null) {
             this.friendEmail = extras.getString("FriendEmail");
             this.friendName = extras.getString("FriendName");
+            this.pushReceived = extras.getBoolean("pushReceived");
             Log.d(ACTIVITY, "Friend Email: " + this.friendEmail);
             Log.d(ACTIVITY, "Friend Name: " + this.friendName);
 
             String invitor = extras.getString("invitor");
-            Log.d(ACTIVITY, "INVITOR EMAIL: " + invitor);
-            if(invitor!=null) {
+            Log.d(ACTIVITY, "Invitor Email: " + invitor);
+            Log.d(ACTIVITY, "Push Received: " + this.pushReceived);
+
+            if(invitor!=null && this.pushReceived !=null) {
                 this.invitorEmail = invitor;
-                //this.executeConnection(invitor);
-                this.showAlert(this.invitorEmail);
+                if(this.pushReceived) {
+                    Log.d(ACTIVITY, "Push Received!");
+                }
+                else {
+                    this.showAlert(this.invitorEmail);
+                }
             }
         }
     }
@@ -137,6 +169,24 @@ public class MapActivity extends Activity {
     }
 
     /**
+     * onResume()
+     */
+    protected void onPause() {
+        super.onPause();
+        Log.d(ACTIVITY, "onPause()");
+        this.runLocationService();
+    }
+
+    /**
+     * runLocationService()
+     */
+    private void runLocationService() {
+        Log.d(ACTIVITY, "Running location service in the background");
+        Intent intent = new Intent(this, LocationService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    /**
      * mapConnectionView()
      */
     private void mapConnectionView() {
@@ -144,11 +194,12 @@ public class MapActivity extends Activity {
             Log.d(ACTIVITY, "Connection was cancelled!");
         }
         else {
-            if (this.invitorEmail != null) {
+            if (this.invitorEmail != null && this.pushReceived == false) {
                 Log.d(ACTIVITY, "Connected to friend!!!");
             } else if (this.friendEmail != null && this.alreadyConnected(this.userEmail, this.friendEmail)) {
                 Log.d(ACTIVITY, "Already connected to friend! Do not show alert.");
             } else if (this.friendEmail != null && this.friendName != null) {
+                this.connectFriends(this.friendEmail);
                 /**
                  * Alert if invite to connect pending
                  */
@@ -167,8 +218,8 @@ public class MapActivity extends Activity {
                 });
                 alert.setCanceledOnTouchOutside(false);
                 alert.show();
-                this.connectFriends(this.friendEmail);
             } else if (this.friendEmail != null) {
+                this.connectFriends(this.friendEmail);
                 /**
                  * Alert if invite to connect pending
                  */
@@ -186,8 +237,14 @@ public class MapActivity extends Activity {
                     }
                 });
                 alert.show();
-                this.connectFriends(this.friendEmail);
-            } else {
+
+            }
+            else if (this.invitorEmail != null && this.pushReceived == true) {
+                Log.d(ACTIVITY, "Approved connection. Mutually connecting!!!");
+                this.friendEmail = this.invitorEmail;
+                this.connectFriends(this.invitorEmail);
+            }
+            else {
                 Log.d(ACTIVITY, "Friend Email is not found!");
 
             }
@@ -292,7 +349,7 @@ public class MapActivity extends Activity {
 
                     }
                 };
-                long minTime = 2 * 1000; // Minimum time interval for update in seconds map
+                long minTime = 0 * 1000; // Minimum time interval for update in seconds map
                 long minDistance = 1;    // Min distance in meters to update
                 this.locationManager.requestLocationUpdates(provider, minTime, minDistance, locationListener);
             }
@@ -422,8 +479,9 @@ public class MapActivity extends Activity {
      * @param email
      */
     private void connectFriends(String email) {
+        Log.d(ACTIVITY, "Connecting friends...");
 
-        if(email!=null) {
+        if(email!=null && this.pushReceived == false) {
             this.sendPushNotification(email);
         }
 
@@ -490,15 +548,12 @@ public class MapActivity extends Activity {
      */
     private void sendPushNotification(String email) {
 
-        ParseQuery userQuery = ParseUser.getQuery();
-        userQuery.whereEqualTo("email", email);
-
-        ParseQuery pushQuery = ParseInstallation.getQuery();
-        pushQuery.whereMatchesQuery("user", userQuery);
+        ParseQuery parseQuery = ParseInstallation.getQuery();
+        parseQuery.whereEqualTo("userEmail", email);
 
         // Send push notification to query
         ParsePush push = new ParsePush();
-        push.setQuery(pushQuery);
+        push.setQuery(parseQuery);
 
         // Setting message with user information
         String userName = ParseUser.getCurrentUser().getString("name");
@@ -507,7 +562,7 @@ public class MapActivity extends Activity {
 
         JSONObject data = null;
         try {
-            data = new JSONObject("{\"alert\": \"" + message + "\",\"badge\": \"1\",\"invitor\": \"" + this.userEmail +"\", \"connectionStatus\": \"" + 0 + "\"}");
+            data = new JSONObject("{\"alert\": \"" + message + "\",\"badge\": \"1\",\"invitor\": \"" + this.userEmail +"\", \"connectionStatus\": \"" + PENDING + "\"}");
         } catch (JSONException e) {
             Log.d(ACTIVITY, "JSON ERROR: "+e);
 
@@ -516,6 +571,7 @@ public class MapActivity extends Activity {
         push.setData(data);
 
         push.sendInBackground();
+
         Log.d(ACTIVITY, "Push Notification sent.");
     }
 
@@ -526,19 +582,21 @@ public class MapActivity extends Activity {
      */
     private void sendPushNotificationReply(String email, int status) {
 
-        ParseQuery userQuery = ParseUser.getQuery();
-        userQuery.whereEqualTo("email", email);
-
-        ParseQuery pushQuery = ParseInstallation.getQuery();
-        pushQuery.whereMatchesQuery("user", userQuery);
+        ParseQuery parseQuery = ParseInstallation.getQuery();
+        parseQuery.whereEqualTo("userEmail", email);
 
         // Send push notification to query
         ParsePush push = new ParsePush();
-        push.setQuery(pushQuery);
+        push.setQuery(parseQuery);
+
+        // Setting message with user information
+        String userName = ParseUser.getCurrentUser().getString("name");
+
+        String message = userName + " accepted invitation.";
 
         JSONObject data = null;
         try {
-            data = new JSONObject("{\"invitor\": \"" + this.userEmail +"\", \"connectionStatus\": \"" + status + "\"}");
+            data = new JSONObject("{\"alert\": \"" + message + "\",\"invitor\": \"" + this.userEmail +"\", \"connectionStatus\": \"" + status + "\"}");
         } catch (JSONException e) {
             Log.d(ACTIVITY, "JSON ERROR: "+e);
 
@@ -547,7 +605,7 @@ public class MapActivity extends Activity {
         push.setData(data);
 
         push.sendInBackground();
-        Log.d(ACTIVITY, "Push Notification sent.");
+        Log.d(ACTIVITY, "Push Notification reply sent.");
     }
 
     /**
@@ -793,9 +851,14 @@ public class MapActivity extends Activity {
             d.setBounds(0, 0, bmp.getWidth(), bmp.getHeight());
             d.draw(canvas);
 
+//            MarkerOptions oldMarker = new MarkerOptions();
+//            oldMarker.getSnippet();
+            this.googleMap.clear();
+
             MarkerOptions marker = new MarkerOptions()
                     .position(new LatLng(lat, lon))
                     .title(this.friendName)
+                    .snippet(MARKER_KEY)
                     .icon(BitmapDescriptorFactory.fromBitmap(bmp))
                     .draggable(true);
 
