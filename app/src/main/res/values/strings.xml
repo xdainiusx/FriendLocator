@@ -25,6 +25,8 @@
     <string name="sign_in_button">Sign In</string>
     <string name="register_button">Register</string>
     <string name="recover_password_button">Recover Password</string>
+    <string name="submit_button">Submit</string>
+    <string name="cancel_button">Cancel</string>
 
     <!-- Text URLs -->
     <string name="register_link">Register!</string>
@@ -32,8 +34,10 @@
 
     <!-- Form Placeholders -->
     <string name="hint_name">Name</string>
+    <string name="hint_name_new">New Name</string>
     <string name="hint_email">Email Address</string>
     <string name="hint_password">Password</string>
+    <string name="hint_password_new">New Password</string>
     <string name="hint_password_verify">Verify Password</string>
 
     <!-- Text Strings -->

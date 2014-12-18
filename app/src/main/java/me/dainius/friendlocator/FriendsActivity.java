@@ -571,7 +571,7 @@ public class FriendsActivity extends Activity {
 
     /**
      * getActivityContext() - gets activity context, good to use in inner classes
-     * @return
+     * @return Context
      */
     public static Context getActivityContext() {
         return FriendsActivity.context;

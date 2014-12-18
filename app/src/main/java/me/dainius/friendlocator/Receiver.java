@@ -19,28 +19,69 @@ public class Receiver extends ParsePushBroadcastReceiver {
 
     @Override
     public void onPushOpen(Context context, Intent intent) {
-        Log.e(ACTIVITY, "Clicked");
+        Log.e(ACTIVITY, "On PushOpen Clicked");
 
         Intent i = new Intent(context, MainActivity.class);
-        String status = null;
+        Integer status = null;
         try {
-            status = this.getStatus(i);
+            status = this.getStatus(intent);
         } catch (Exception e) {
             Log.d(ACTIVITY, "No status inside JSON: " + e);
-            status = "0";
+            status = 0;
         }
-        if(status.equals("3")) {
+        if(status == 3) {
             Log.d(ACTIVITY, "DECLINED!!!");
         }
         else {
             Log.d(ACTIVITY, "ACCEPTED!!!");
             i.putExtras(intent.getExtras());
             i.putExtra("invitor", this.getInvitor(intent));
+            i.putExtra("pushReceived", false);
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
             context.startActivity(i);
         }
+    }
 
+    public void onPushReceive(Context context, Intent intent) {
+        Log.e(ACTIVITY, "On PushReceive Launched");
+
+        Intent i = new Intent(context, MainActivity.class);
+        Integer status = null;
+        try {
+            status = this.getStatus(intent);
+        } catch (Exception e) {
+            Log.d(ACTIVITY, "No status inside JSON: " + e);
+            status = 0;
+        }
+        if(status == 3) {
+            Log.d(ACTIVITY, "DECLINED!!!");
+            i.putExtras(intent.getExtras());
+            i.putExtra("invitor", this.getInvitor(intent));
+            i.putExtra("pushReceived", false);
+            i.putExtra("declined", true);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            context.startActivity(i);
+        }
+        else if(status == 1) {
+            Log.d(ACTIVITY, "PENDING!!!");
+            i.putExtras(intent.getExtras());
+            i.putExtra("invitor", this.getInvitor(intent));
+            i.putExtra("pushReceived", false);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            context.startActivity(i);
+        }
+        else if(status == 2) {
+            Log.d(ACTIVITY, "CONNECTED!!!");
+            i.putExtras(intent.getExtras());
+            i.putExtra("invitor", this.getInvitor(intent));
+            i.putExtra("pushReceived", true);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            context.startActivity(i);
+        }
     }
 
     private String getInvitor(Intent i){
@@ -61,14 +102,14 @@ public class Receiver extends ParsePushBroadcastReceiver {
         return email;
     }
 
-    private String getStatus(Intent i){
+    private Integer getStatus(Intent i){
 
         String json = i.getExtras().getString("com.parse.Data");
-        String status = null;
+        Integer status = null;
         JSONObject jsonObj = null;
         try {
             jsonObj = new JSONObject(json);
-            status = jsonObj.getString("connectionStatus");
+            status = jsonObj.getInt("connectionStatus");
         } catch(JSONException e) {
             Log.d(ACTIVITY, "Error parsing: " + e);
             status = null;
