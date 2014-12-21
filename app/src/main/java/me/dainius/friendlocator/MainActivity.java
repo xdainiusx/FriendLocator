@@ -106,6 +106,12 @@ public class MainActivity extends TabActivity implements
         this.lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
         this.updateDatabase(this.lastKnownLocation);
+
+        try {
+            Log.d(ACTIVITY, "LOCATION LATITUDE: " + this.lastKnownLocation.getLatitude());
+        } catch(Exception e) {
+            Log.d(ACTIVITY, "NO LOCATION LATITUDE YET");
+        }
     }
 
     /**
@@ -117,7 +123,6 @@ public class MainActivity extends TabActivity implements
         Log.d(ACTIVITY, "onPause");
         this.sharedPreferencesEditor.putBoolean("KEY_UPDATES_ON", this.updatesRequested);
         this.sharedPreferencesEditor.commit();
-
     }
 
     /**

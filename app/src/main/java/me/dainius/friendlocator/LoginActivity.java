@@ -40,6 +40,9 @@ public class LoginActivity extends Activity {
         setContentView(R.layout.activity_login);
     }
 
+    /**
+     * onResume()
+     */
     public void onResume() {
         super.onResume();
         if(!isNetworkAvailable()) {

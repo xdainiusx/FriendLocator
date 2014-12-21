@@ -13,10 +13,18 @@ import org.json.JSONObject;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Receiver - notifications for Parse
+ */
 public class Receiver extends ParsePushBroadcastReceiver {
 
     private static String ACTIVITY = "Receiver";
 
+    /**
+     * onPushOpen()
+     * @param context
+     * @param intent
+     */
     @Override
     public void onPushOpen(Context context, Intent intent) {
         Log.e(ACTIVITY, "On PushOpen Clicked");
@@ -43,6 +51,11 @@ public class Receiver extends ParsePushBroadcastReceiver {
         }
     }
 
+    /**
+     * onPushReceive()
+     * @param context
+     * @param intent
+     */
     public void onPushReceive(Context context, Intent intent) {
         Log.e(ACTIVITY, "On PushReceive Launched");
 
@@ -84,6 +97,11 @@ public class Receiver extends ParsePushBroadcastReceiver {
         }
     }
 
+    /**
+     * getInvitor()
+     * @param i
+     * @return
+     */
     private String getInvitor(Intent i){
 
         String json = i.getExtras().getString("com.parse.Data");
@@ -102,6 +120,11 @@ public class Receiver extends ParsePushBroadcastReceiver {
         return email;
     }
 
+    /**
+     * getStatus()
+     * @param i
+     * @return
+     */
     private Integer getStatus(Intent i){
 
         String json = i.getExtras().getString("com.parse.Data");
