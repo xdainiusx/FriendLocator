@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,13 +21,16 @@ import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.parse.ParseACL;
 import com.parse.ParseException;
+import com.parse.ParseInstallation;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
@@ -46,9 +51,14 @@ public class MainActivity extends TabActivity implements
     private static final float SMALLEST_DISPLACEMENT_IN_METERS = 2f;
     private static final double LOG_DISTANCE_CHANGE_TO_DB = 1.0;
 
+    private static Context context;
     private ActionBar actionBar;
     private int defaultTab = -1;
-    private String friendID = null;
+    private String friendEmail = null;
+    private String friendName = null;
+    private String invitor = null;
+    private Boolean pushReceived = null;
+    private Boolean declined = null;
     public LocationManager locationManager;
     public Location lastKnownLocation;
     private Location currentLocation;
@@ -67,8 +77,21 @@ public class MainActivity extends TabActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(ACTIVITY, "Main Activity");
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+
+        // Save the current Installation to Parse.
+        ParseInstallation installation = ParseInstallation.getCurrentInstallation();
+        installation.put("user", ParseUser.getCurrentUser());
+        installation.put("userEmail", ParseUser.getCurrentUser().getEmail());
+
+        ParseACL acl = new ParseACL();
+        acl.setPublicReadAccess(true);
+        acl.setPublicWriteAccess(true);
+        installation.setACL(acl);
+
+        installation.saveInBackground();
 
         this.locationRequest = LocationRequest.create();
         this.locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -84,33 +107,131 @@ public class MainActivity extends TabActivity implements
 
         this.updateDatabase(this.lastKnownLocation);
 
+        try {
+            Log.d(ACTIVITY, "LOCATION LATITUDE: " + this.lastKnownLocation.getLatitude());
+        } catch(Exception e) {
+            Log.d(ACTIVITY, "NO LOCATION LATITUDE YET");
+        }
+    }
+
+    /**
+     * onPause()
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(ACTIVITY, "onPause");
+        this.sharedPreferencesEditor.putBoolean("KEY_UPDATES_ON", this.updatesRequested);
+        this.sharedPreferencesEditor.commit();
+    }
+
+    /**
+     * onStart()
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(ACTIVITY, "onStart");
+        this.locationClient.connect();
+    }
+
+    /**
+     * onResume()
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(ACTIVITY, "onResume");
+        if(isNetworkAvailable()) {
+            this.getExtras();
+        }
+        else {
+            Log.d(ACTIVITY, "No network connection!");
+            this.goToActivity("Login", null, null);
+        }
+    }
+
+    /**
+     * onStop()
+     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(ACTIVITY, "onStop");
+    }
+
+    /**
+     * onDestroy()
+     */
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(ACTIVITY, "onDestroy");
+        this.stopPeriodicUpdates();
+        if (ParseUser.getCurrentUser() != null) {
+            ParseUser user = ParseUser.getCurrentUser();
+            user.put("isOnline", false);
+            user.saveInBackground();
+            this.locationClient.disconnect();
+        }
+    }
+
+    /**
+     * getExtras()
+     */
+    private void getExtras() {
         Bundle extras = this.getIntent().getExtras();
         if(extras != null) {
             this.defaultTab = extras.getInt("defaultTab");
             Log.d(ACTIVITY, "Default tab: " + this.defaultTab);
 
-            this.friendID = extras.getString("FriendID");
-            Log.d(ACTIVITY, "Friend ID: " + this.friendID);
+            this.friendEmail = extras.getString("FriendEmail");
+            Log.d(ACTIVITY, "Friend Email: " + this.friendEmail);
+
+            this.friendName = extras.getString("FriendName");
+            Log.d(ACTIVITY, "Friend Name: " + this.friendName);
+
+            this.invitor = extras.getString("invitor");
+            Log.d(ACTIVITY, "Invitor Name: " + this.invitor);
+
+            this.pushReceived = extras.getBoolean("pushReceived");
+            Log.d(ACTIVITY, "Push Received: " + this.pushReceived);
+
+            this.declined = extras.getBoolean("declined");
+            Log.d(ACTIVITY, "Push Received: " + this.pushReceived);
         }
 
-        this.goToActivity("Friends", null);
-        if(this.friendID!=null){
-            this.goToActivity("Map", this.friendID);
+        this.goToActivity("Friends", null, null);
+
+        Log.d(ACTIVITY, "DECLINED VALUE: "+this.declined);
+
+        if(this.invitor!=null){
+            goToActivity("Map", null, null);
+        }
+        else if(this.friendEmail!=null && this.friendName!=null){
+            this.goToActivity("Map", this.friendEmail, this.friendName);
+        }
+        else if(this.friendEmail!=null ){
+            this.goToActivity("Map", this.friendEmail, null);
         }
         else{
-            this.goToActivity("Map", null);
+            this.goToActivity("Map", null, null);
         }
-        this.goToActivity("Settings", null);
+        this.goToActivity("Settings", null, null);
     }
 
     /**
      * gotToActivity()
      * @param activityName
-     * @param friendID - if no ID passed -1
+     * @param friendEmail
      */
-    public void goToActivity(String activityName, String friendID) {
+    public void goToActivity(String activityName, String friendEmail, String friendName) {
 
         TabHost tabHost = (TabHost)findViewById(android.R.id.tabhost);
+
+        if(activityName.equals("Login")) {
+            Intent loginIntent = new Intent(this, LoginActivity.class);
+            startActivity(loginIntent);
+        }
 
         if(activityName.equals("Friends")) {
             // Friends Tab
@@ -136,8 +257,21 @@ public class MainActivity extends TabActivity implements
             // Add view to map tab
             mapTab.setIndicator(mapTabIndicator);
             Intent mapIntent = new Intent(this, MapActivity.class);
-            if(friendID!=null){
-                mapIntent.putExtra("FriendID", friendID);
+            if(this.declined!=null && this.declined == true) {
+                Log.d(ACTIVITY, "Not adding anything to extras");
+            }
+            else {
+                if (this.invitor != null) {
+                    mapIntent.putExtra("invitor", this.invitor);
+                } else if (friendEmail != null && friendName != null) {
+                    mapIntent.putExtra("FriendEmail", friendEmail);
+                    mapIntent.putExtra("FriendName", friendName);
+                } else if (friendEmail != null) {
+                    mapIntent.putExtra("FriendEmail", friendEmail);
+                }
+                if (this.pushReceived != null) {
+                    mapIntent.putExtra("pushReceived", this.pushReceived);
+                }
             }
             mapTab.setContent(mapIntent);
             tabHost.addTab(mapTab);
@@ -157,69 +291,14 @@ public class MainActivity extends TabActivity implements
             tabHost.addTab(settingsTab);
         }
 
-        if(friendID!=null){
+        if(this.declined!=null && this.declined == true){
+            tabHost.setCurrentTab(0);
+        }
+        else if(this.invitor!=null){
             tabHost.setCurrentTab(1);
         }
-    }
-
-    /**
-     * onPause()
-     */
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(ACTIVITY, "onPause");
-        this.sharedPreferencesEditor.putBoolean("KEY_UPDATES_ON", this.updatesRequested);
-        this.sharedPreferencesEditor.commit();
-
-    }
-
-    /**
-     * onStart()
-     */
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d(ACTIVITY, "onStart");
-        this.locationClient.connect();
-    }
-
-    /**
-     * onResume()
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(ACTIVITY, "onResume");
-        if(this.sharedPreferences.contains("KEY_UPDATES_ON")) {
-            this.updatesRequested = this.sharedPreferences.getBoolean("KEY_UPDATES_ON", false);
-        }
-        else {
-            this.sharedPreferencesEditor.putBoolean("KEY_UPDATES_ON", false);
-            this.sharedPreferencesEditor.commit();
-        }
-    }
-
-    /**
-     * onStop()
-     */
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(ACTIVITY, "onStop");
-    }
-
-    /**
-     * onDestroy()
-     */
-    protected void onDestroy() {
-        super.onDestroy();
-        this.stopPeriodicUpdates();
-        if (ParseUser.getCurrentUser() != null) {
-            ParseUser user = ParseUser.getCurrentUser();
-            user.put("isOnline", false);
-            user.saveInBackground();
-            this.locationClient.disconnect();
+        else if(friendEmail!=null){
+            tabHost.setCurrentTab(1);
         }
     }
 
@@ -314,18 +393,20 @@ public class MainActivity extends TabActivity implements
      * @param location
      */
     public void onLocationChanged(Location location) {
-        Log.d(ACTIVITY, "Location changed in MainActivity");
-        this.currentLocation = location;
-        String locationString = "Updated Location: " + this.currentLocation.getLatitude() + ", " + this.currentLocation.getLongitude();
-        Log.d(ACTIVITY, locationString);
-        if(this.lastKnownLocation != null) {
-            this.distanceChanged = this.roundDistance(this.currentLocation.distanceTo(this.lastKnownLocation));
-            Log.d(ACTIVITY, "Distance Changed: " + this.distanceChanged);
-            if(this.distanceChanged >= LOG_DISTANCE_CHANGE_TO_DB) {
-                this.updateDatabase(this.currentLocation);
+        Log.d(ACTIVITY, "MainActivity onLocationChanged()");
+        if(isNetworkAvailable()) {
+            this.currentLocation = location;
+            String locationString = "Updated Location: " + this.currentLocation.getLatitude() + ", " + this.currentLocation.getLongitude();
+            Log.d(ACTIVITY, locationString);
+            if (this.lastKnownLocation != null) {
+                this.distanceChanged = this.roundDistance(this.currentLocation.distanceTo(this.lastKnownLocation));
+                Log.d(ACTIVITY, "Distance Changed: " + this.distanceChanged);
+                if (this.distanceChanged >= LOG_DISTANCE_CHANGE_TO_DB) {
+                    this.updateDatabase(this.currentLocation);
+                }
             }
+            this.lastKnownLocation = location;
         }
-        this.lastKnownLocation = location;
     }
 
     /**
@@ -333,19 +414,24 @@ public class MainActivity extends TabActivity implements
      * @param location
      */
     private void updateDatabase(Location location) {
-        ParseUser user = ParseUser.getCurrentUser();
-        user.put("latitude", location.getLatitude());
-        user.put("longitude", location.getLongitude());
-        user.saveInBackground(new SaveCallback() {
-            public void done(ParseException e) {
-                if (e != null) {
-                    Log.d(ACTIVITY, "Error saving location! " + e.getLocalizedMessage());
-                }
-                else {
-                    Log.d(ACTIVITY, "Location saved successfully");
-                }
+        if(isNetworkAvailable()) {
+            ParseUser user = ParseUser.getCurrentUser();
+            try {
+                user.put("latitude", location.getLatitude());
+                user.put("longitude", location.getLongitude());
+                user.saveInBackground(new SaveCallback() {
+                    public void done(ParseException e) {
+                        if (e != null) {
+                            Log.d(ACTIVITY, "Error saving location! " + e.getLocalizedMessage());
+                        } else {
+                            Log.d(ACTIVITY, "Location saved successfully");
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                Log.d(ACTIVITY, "Error: " + e);
             }
-        });
+        }
     }
 
     /**
@@ -392,6 +478,24 @@ public class MainActivity extends TabActivity implements
         n = n/100;
 
         return n;
+    }
+
+    /**
+     * getActivityContext() - gets activity context, good to use in inner classes
+     * @return Context
+     */
+    public static Context getActivityContext() {
+        return MainActivity.context;
+    }
+
+    /**
+     * isNetworkAvailable()
+     * @return boolean
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivitymanager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivitymanager.getActiveNetworkInfo();
+        return networkInfo !=null && networkInfo.isConnected();
     }
 
 }

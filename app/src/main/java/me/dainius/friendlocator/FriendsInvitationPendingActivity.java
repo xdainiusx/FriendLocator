@@ -185,10 +185,38 @@ public class FriendsInvitationPendingActivity extends Activity {
      * saveToFriends() - save to Friends table
      */
     public void saveToFriends(ParseUser friendUser, int status) {
+        // getFriends(ParseUser user, ParseUser friend)
         if(this.getFriends(ParseUser.getCurrentUser(), friendUser)==null) {
             Friends friends = new Friends();
             friends.setUser(ParseUser.getCurrentUser());
             friends.setUsersFriend(friendUser);
+            friends.setStatus(status);
+
+            ParseACL friendAcl = new ParseACL();
+            friendAcl.setPublicReadAccess(true);
+            friends.setACL(friendAcl);
+
+            friends.saveInBackground(new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "Friend saved to Friends table.");
+                    } else {
+                        Log.d(ACTIVITY, "Error saving friend to Friends table.");
+                    }
+                }
+            });
+        }
+        else {
+            Log.d(ACTIVITY, "User already in Friends table!");
+        }
+
+        // Now add the other way
+        // getFriends(ParseUser friend, ParseUser user)
+        if(this.getFriends(friendUser, ParseUser.getCurrentUser())==null) {
+            Friends friends = new Friends();
+            friends.setUser(friendUser);
+            friends.setUsersFriend(ParseUser.getCurrentUser());
             friends.setStatus(status);
 
             ParseACL friendAcl = new ParseACL();

@@ -25,6 +25,8 @@
     <string name="sign_in_button">Sign In</string>
     <string name="register_button">Register</string>
     <string name="recover_password_button">Recover Password</string>
+    <string name="submit_button">Submit</string>
+    <string name="cancel_button">Cancel</string>
 
     <!-- Text URLs -->
     <string name="register_link">Register!</string>
@@ -32,8 +34,10 @@
 
     <!-- Form Placeholders -->
     <string name="hint_name">Name</string>
+    <string name="hint_name_new">New Name</string>
     <string name="hint_email">Email Address</string>
     <string name="hint_password">Password</string>
+    <string name="hint_password_new">New Password</string>
     <string name="hint_password_verify">Verify Password</string>
 
     <!-- Text Strings -->
@@ -46,7 +50,7 @@
     <string name="help_title">Help</string>
     <string name="help_subtitle">Get some help how to use the application</string>
     <string name="version_title">Version</string>
-    <string name="version_subtitle">1.0.1</string>
+    <string name="version_subtitle">1.1.0</string>
     <string name="header_activity_pending_invitations">Pending friend invitations</string>
     <string name="invitations_pending">Have Pending Invitations!</string>
 
