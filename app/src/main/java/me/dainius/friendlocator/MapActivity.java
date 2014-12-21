@@ -174,7 +174,7 @@ public class MapActivity extends Activity {
     protected void onPause() {
         super.onPause();
         Log.d(ACTIVITY, "onPause()");
-        this.runLocationService();
+        //this.runLocationService();
     }
 
     /**

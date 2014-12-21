@@ -13,7 +13,7 @@
         <TextView
             style="@style/ActivityBarFont"
             android:text="@string/title_activity_settings"
-        />
+            />
 
     </RelativeLayout>
 
@@ -88,6 +88,7 @@
                 android:layout_height="80dp">
 
                 <TextView
+                    android:id="@+id/logoutButtonWithName"
                     android:singleLine="true"
                     android:layout_alignParentTop="true"
                     android:layout_width="wrap_content"

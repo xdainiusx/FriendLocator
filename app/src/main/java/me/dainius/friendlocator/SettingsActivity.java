@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.parse.ParseException;
@@ -35,6 +36,10 @@ public class SettingsActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_settings);
+
+        TextView logoutWithName = (TextView)findViewById(R.id.logoutButtonWithName);
+
+        logoutWithName.setText("Logout (" + this.getUserName() + ")" );
     }
 
     /**
@@ -241,5 +246,20 @@ public class SettingsActivity extends Activity {
         Toast t = Toast.makeText(getApplicationContext(), this.capitalizeString(message), Toast.LENGTH_SHORT);
         t.setGravity(Gravity.CENTER, 0, 0);
         t.show();
+    }
+
+    /**
+     * getUserName()
+     * @return String
+     */
+    private String getUserName() {
+        String name;
+        try {
+            name = ParseUser.getCurrentUser().getString("name");
+        } catch (Exception e) {
+            Log.d(ACTIVITY, "Parse User Exception " + e);
+            name = "";
+        }
+        return name;
     }
 }
