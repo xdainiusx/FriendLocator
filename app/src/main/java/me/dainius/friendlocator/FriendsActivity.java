@@ -137,10 +137,50 @@ public class FriendsActivity extends Activity {
                         alertFriendNotOnline(friend);
                     }
 
+                }
+            });
 
+            this.friendsListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> adapter, View view, int position, long id) {
+                    Friend friend = (Friend) adapter.getItemAtPosition(position);
+                    Log.d(ACTIVITY, friend.getName() + " long clicked");
+                    alertDeleteFriend(friend, view);
+                    return true;
                 }
             });
         }
+    }
+
+    /**
+     * alertDeleteFriend()
+     * @param friend
+     */
+    private void alertDeleteFriend(Friend friend, View view) {
+
+        final View localView = view;
+        /**
+         * Alert on friend long click
+         */
+        AlertDialog alert = new AlertDialog.Builder(FriendsActivity.this).create();
+        alert.setTitle("Delete friend? " + friend.getName());
+        Log.d(ACTIVITY, "Friends Email: " + friend.getEmail());
+        alert.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "Yes pressed");
+                View parent = (View)localView;
+                parent.setVisibility(View.GONE);
+            }
+        });
+        alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "No pressed");
+            }
+        });
+        alert.show();
     }
 
     /**
@@ -256,28 +296,28 @@ public class FriendsActivity extends Activity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-            Log.d(ACTIVITY, "Invite pressed");
-            Editable email = input.getText();
-            String emailAddress = email.toString();
-            Log.d(ACTIVITY, "Email address entered: " + emailAddress);
+                Log.d(ACTIVITY, "Invite pressed");
+                Editable email = input.getText();
+                String emailAddress = email.toString();
+                Log.d(ACTIVITY, "Email address entered: " + emailAddress);
 
-            boolean valid = isEmailValid(emailAddress);
+                boolean valid = isEmailValid(emailAddress);
 
-            boolean canCloseDialog = (valid == true);
+                boolean canCloseDialog = (valid == true);
 
-            if (canCloseDialog) {
-                invite(emailAddress);
-            } else {
-                String errorMessage = "Email is invalid! Please try again.";
-                toastIt(errorMessage);
-            }
+                if (canCloseDialog) {
+                    invite(emailAddress);
+                } else {
+                    String errorMessage = "Email is invalid! Please try again.";
+                    toastIt(errorMessage);
+                }
             }
         });
         alert.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-            Log.d(ACTIVITY, "Cancel pressed");
+                Log.d(ACTIVITY, "Cancel pressed");
             }
         });
         alert.show();
@@ -508,14 +548,14 @@ public class FriendsActivity extends Activity {
         friendInvitation.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
-            //finish();
-            if (e == null) {
-                String message = "Invitation was sent to " + friendEmail + ".";
-                toastIt(message);
-            } else {
-                Log.d(ACTIVITY, "Exception: " + e);
-                toastIt(e.getLocalizedMessage());
-            }
+                //finish();
+                if (e == null) {
+                    String message = "Invitation was sent to " + friendEmail + ".";
+                    toastIt(message);
+                } else {
+                    Log.d(ACTIVITY, "Exception: " + e);
+                    toastIt(e.getLocalizedMessage());
+                }
             }
         });
     }
