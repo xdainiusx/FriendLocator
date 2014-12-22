@@ -12,7 +12,9 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -31,6 +33,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.parse.ParseACL;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
@@ -50,6 +53,8 @@ public class MainActivity extends TabActivity implements
     private static final long FASTEST_INTERVAL = MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
     private static final float SMALLEST_DISPLACEMENT_IN_METERS = 2f;
     private static final double LOG_DISTANCE_CHANGE_TO_DB = 1.0;
+
+    private static double VIBRATE_DISTANCE = 10.0;
 
     private static Context context;
     private ActionBar actionBar;
@@ -404,6 +409,16 @@ public class MainActivity extends TabActivity implements
                 if (this.distanceChanged >= LOG_DISTANCE_CHANGE_TO_DB) {
                     this.updateDatabase(this.currentLocation);
                 }
+                if(this.friendEmail!=null){
+                    Location friendLocation = this.getUserLocation(this.friendEmail);
+                    double distance;
+                    try {
+                        distance = this.currentLocation.distanceTo(friendLocation);
+                    } catch (Exception e) {
+                        Log.d(ACTIVITY, "Error getting location: " + e);
+                        distance = -1.0;
+                    }
+                }
             }
             this.lastKnownLocation = location;
         }
@@ -496,6 +511,72 @@ public class MainActivity extends TabActivity implements
         ConnectivityManager connectivitymanager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivitymanager.getActiveNetworkInfo();
         return networkInfo !=null && networkInfo.isConnected();
+    }
+
+    /**
+     * vibrate
+     * @param milliseconds
+     */
+    private void vibrate(int milliseconds) {
+        Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(milliseconds);
+    }
+
+    /**
+     * getUserByEmail()
+     * @param emailAddress
+     * @return ParseUser
+     */
+    private ParseUser getUserByEmail(String emailAddress) {
+        ParseUser user = null;
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo("username", emailAddress);
+        try {
+            user = query.getFirst().fetchIfNeeded();
+        } catch (ParseException e) {
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        return user;
+    }
+
+    /**
+     * getUserLocation() - gets location of a friend
+     * @return
+     */
+    private Location getUserLocation(String email) {
+        Log.d(ACTIVITY, "getUserLocation() for " + email);
+        Location location = new Location(LocationManager.GPS_PROVIDER);
+
+        ParseUser user = this.getUserByEmail(email);
+
+        location.setLatitude((Double)user.get("latitude"));
+        location.setLongitude((Double)user.get("longitude"));
+
+        Log.d(ACTIVITY, "USER's EMAIL   : " + email);
+        Log.d(ACTIVITY, "USER's LOCATION: " + location);
+
+        return location;
+    }
+
+    /**
+     * capitalizeString()
+     * @param str
+     * @return String
+     */
+    public String capitalizeString(String str) {
+        String newString = str.substring(0, 1).toUpperCase() + str.substring(1);
+        return newString;
+    }
+
+    /**
+     * toastIt() - toast used for form verification
+     * @param message
+     */
+    public void toastIt(String message) {
+        Log.d(ACTIVITY, message);
+        Toast t = Toast.makeText(getApplicationContext(), this.capitalizeString(message), Toast.LENGTH_LONG);
+        t.setGravity(Gravity.CENTER, 0, 0);
+        t.show();
     }
 
 }

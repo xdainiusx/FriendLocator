@@ -15,6 +15,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -69,10 +70,11 @@ public class MapActivity extends Activity implements
     private static String ACTIVITY = "MapActivity";
     private static String MARKER_KEY = "ABCDEFGHIJKLMN";
     private static double DEFAULT_DISTANCE = 10000.0;
+    private static double VIBRATE_DISTANCE = 10.0;
     private static int PENDING = 1;
     private static int CONNECTED = 2;
     private static int DECLINED = 3;
-    Context mapContext;
+    private static Context mapContext;
     GoogleMap googleMap;
     public LocationManager locationManager;
     Location oldLocation;
@@ -94,6 +96,10 @@ public class MapActivity extends Activity implements
     LocationClient locationClient;
     boolean updatesRequested;
     private Location currentLocation;
+    private boolean toVibrate = false;
+    private boolean alertClicked = false;
+    private boolean isConnectionPending = false;
+    private boolean wasConnectionDismissed = false;
 
     /**
      * onCreate()
@@ -151,6 +157,7 @@ public class MapActivity extends Activity implements
         super.onResume();
         Log.d(ACTIVITY, "onResume()");
         this.mapConnectionView();
+        this.setToVibrate(false);
     }
 
     /**
@@ -161,6 +168,9 @@ public class MapActivity extends Activity implements
         Log.d(ACTIVITY, "onPause()");
         this.sharedPreferencesEditor.putBoolean("KEY_MAP_UPDATES_ON", this.updatesRequested);
         this.sharedPreferencesEditor.commit();
+        this.setToVibrate(true);
+        this.setAlertClicked(false);
+        this.setIsConnectionPending(this.isConnectionPending(this.invitorEmail, this.friendEmail));
     }
 
     /**
@@ -205,8 +215,9 @@ public class MapActivity extends Activity implements
         if(isNetworkAvailable()) {
             this.currentLocation = location;
             double distance;
+            this.friendLocation = getUserLocation(friendEmail);
             try {
-                distance = this.currentLocation.distanceTo(getUserLocation(friendEmail));
+                distance = this.currentLocation.distanceTo(this.friendLocation);
             } catch (Exception e) {
                 Log.d(ACTIVITY, "Error getting location: " + e);
                 distance = -1.0;
@@ -224,9 +235,58 @@ public class MapActivity extends Activity implements
             String locationString = "Updated Location: " + this.currentLocation.getLatitude() + ", " + this.currentLocation.getLongitude();
             Log.d(ACTIVITY, locationString);
 
-            setDistance(distance);
-        }
+            // Update the distance
+            if(friendEmail==null){
+                distance = -1.0;
+            }
+            this.setDistance(distance);
+            // Update friend marker
+            this.addMarker(this.friendLocation);
 
+            if(!this.isConnectionPending()) {
+                Log.d(ACTIVITY, "Connection pending? : " + this.isConnectionPending());
+                if (distance > 0 && distance < VIBRATE_DISTANCE) {
+                    this.vibrate(1000);
+                    if (!wasAlertClicked()) {
+                        this.alertFriendIsClose(this.friendName, this.friendEmail, distance);
+                    }
+                    else {
+                        Log.d(ACTIVITY, "Alert was clicked");
+                    }
+                }
+            }
+            else {
+                Log.d(ACTIVITY, "Connection is pending");
+            }
+        }
+    }
+
+    /**
+     * alertFriendIsClose()
+     * @param friendName
+     * @param distance
+     */
+    private void alertFriendIsClose(String friendName, String friendEmail, double distance) {
+        final String localFriendEmail = friendEmail;
+        this.setAlertClicked(true);
+        /**
+         * Alert on friend click
+         */
+        AlertDialog alert = new AlertDialog.Builder(MapActivity.this).create();
+        alert.setTitle("Alert from FriendLocator!");
+        alert.setMessage(friendName + " is " + this.roundDistance(distance) + " meters away!");
+        alert.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(ACTIVITY, "Yes pressed");
+                setToVibrate(false);
+                deleteConnection(localFriendEmail);
+                dialog.dismiss();
+                setAlertClicked(true);
+                setWasConnectionDismissed(true);
+            }
+        });
+        alert.show();
     }
 
     /**
@@ -241,8 +301,9 @@ public class MapActivity extends Activity implements
                 Log.d(ACTIVITY, "Connected to friend!!!");
             } else if (this.friendEmail != null && this.alreadyConnected(this.userEmail, this.friendEmail)) {
                 Log.d(ACTIVITY, "Already connected to friend! Do not show alert.");
-            } else if (this.friendEmail != null && this.friendName != null) {
+            } else if (this.friendEmail != null && this.friendName != null && !wasConnectionDismissed()) {
                 this.connectFriends(this.friendEmail);
+                this.setIsConnectionPending(true);
                 /**
                  * Alert if invite to connect pending
                  */
@@ -262,8 +323,9 @@ public class MapActivity extends Activity implements
                 alert.setCanceledOnTouchOutside(false);
                 alert.show();
             }
-            else if (this.friendEmail != null) {
+            else if (this.friendEmail != null && !wasConnectionDismissed()) {
                 this.connectFriends(this.friendEmail);
+                this.setIsConnectionPending(true);
                 /**
                  * Alert if invite to connect pending
                  */
@@ -463,6 +525,7 @@ public class MapActivity extends Activity implements
             if(activeConnection!=null) {
                 activeConnection.deleteInBackground();
                 Log.d(ACTIVITY, "Object deleted.");
+                this.resetMapView();
             }
         } catch (ParseException e) {
             Log.d(ACTIVITY, e.getLocalizedMessage());
@@ -479,10 +542,22 @@ public class MapActivity extends Activity implements
             if(activeConnection!=null) {
                 activeConnection.deleteInBackground();
                 Log.d(ACTIVITY, "Object deleted.");
+                this.resetMapView();
             }
         } catch (ParseException e) {
             Log.d(ACTIVITY, e.getLocalizedMessage());
         }
+    }
+
+    /**
+     * resetMapView()
+     */
+    private void resetMapView() {
+        this.friendEmail = null;
+        this.friendLocation = null;
+        this.googleMap.clear();
+        this.distanceTextView = (TextView) findViewById(R.id.distanceTextView);
+        distanceTextView.setText("No connection to friend!");
     }
 
     /**
@@ -715,8 +790,12 @@ public class MapActivity extends Activity implements
 
         ParseUser user = this.getUserByEmail(email);
 
-        location.setLatitude((Double)user.get("latitude"));
-        location.setLongitude((Double)user.get("longitude"));
+        try {
+            location.setLatitude((Double) user.get("latitude"));
+            location.setLongitude((Double) user.get("longitude"));
+        } catch (Exception e) {
+            Log.d(ACTIVITY, "Location is unknown!!!");
+        }
 
         Log.d(ACTIVITY, "USER's EMAIL   : " + email);
         Log.d(ACTIVITY, "USER's LOCATION: " + location);
@@ -748,13 +827,13 @@ public class MapActivity extends Activity implements
      */
     private int getZoom(double distance) {
         int zoom = 0;
-        if(distance < 10){
+        if(distance < 5){
             zoom = 22;
         }
-        else if(distance < 15 && distance >= 10) {
+        else if(distance < 10 && distance >= 5) {
             zoom = 21;
         }
-        else if(distance < 25 && distance >= 15) {
+        else if(distance < 25 && distance >= 10) {
             zoom = 20;
         }
         else if(distance < 50 && distance >= 25) {
@@ -1011,6 +1090,7 @@ public class MapActivity extends Activity implements
                 executeConnection(invitorEmail);
                 sendPushNotificationReply(invitorEmail, CONNECTED);
                 mapConnectionView();
+                setIsConnectionPending(false);
             }
         });
         alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
@@ -1105,4 +1185,143 @@ public class MapActivity extends Activity implements
         return false;
     }
 
+    /**
+     * vibrate
+     * @param milliseconds
+     */
+    private void vibrate(int milliseconds) {
+        Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+        if(this.shouldVibrate()) {
+            v.vibrate(milliseconds);
+        }
+    }
+
+    /**
+     * setToVibrate()
+     * @param status
+     */
+    private void setToVibrate(boolean status) {
+        this.toVibrate = status;
+    }
+
+    /**
+     * shouldVibrate()
+     * @return
+     */
+    private boolean shouldVibrate() {
+        return this.toVibrate;
+    }
+
+    /**
+     * setAlertClicked()
+     * @param status
+     */
+    private void setAlertClicked(boolean status) {
+        this.alertClicked = status;
+    }
+
+    /**
+     * wasAlertClicked()
+     * @return boolean
+     */
+    private boolean wasAlertClicked(){
+        return this.alertClicked;
+    }
+
+    /**
+     * setIsConnectionPending()
+     * @param status
+     */
+    private void setIsConnectionPending(boolean status) {
+        this.isConnectionPending = status;
+    }
+
+    /**
+     * isConnectionPending()
+     * @return boolean
+     */
+    private boolean isConnectionPending() {
+        return this.isConnectionPending;
+    }
+
+    /**
+     * wasConnectionDismissed()
+     * @return boolean
+     */
+    private boolean wasConnectionDismissed() {
+        return this.wasConnectionDismissed;
+    }
+
+    /**
+     * setWasConnectionDismissed()
+     * @param status
+     */
+    private void setWasConnectionDismissed(boolean status) {
+        this.wasConnectionDismissed = status;
+    }
+
+    /**
+     * isConnectionPending()
+     * @param invitorEmail
+     * @param friendEmail
+     * @return boolean
+     */
+    private boolean isConnectionPending(String invitorEmail, String friendEmail) {
+        if(invitorEmail!=null && friendEmail!=null) {
+            boolean localIsConnectionPending = true;
+            int status1 = 0;
+            int status2 = 0;
+            ActiveConnection activeConnection = null;
+            ParseQuery<ActiveConnection> query = ParseQuery.getQuery("ActiveConnection");
+            query.whereEqualTo("invitorEmail", invitorEmail);
+            query.whereEqualTo("friendEmail", friendEmail);
+            try {
+                activeConnection = query.getFirst();
+                Log.d(ACTIVITY, "INVITER: " + activeConnection.getString("invitorEmail"));
+                Log.d(ACTIVITY, "FRIEND:  " + activeConnection.getString("friendEmail"));
+                if (activeConnection != null) {
+                    try {
+                        status1 = activeConnection.getInt("status");
+                    } catch (Exception e) {
+                        Log.d(ACTIVITY, "Error getting status1: " + e);
+                    }
+                }
+            } catch (ParseException e) {
+                Log.d(ACTIVITY, e.getLocalizedMessage());
+            }
+
+            // Get the other way
+            ActiveConnection activeConnection2 = null;
+            ParseQuery<ActiveConnection> query2 = ParseQuery.getQuery("ActiveConnection");
+            query2.whereEqualTo("invitorEmail", friendEmail);
+            query2.whereEqualTo("friendEmail", invitorEmail);
+            try {
+                activeConnection2 = query2.getFirst();
+                Log.d(ACTIVITY, "INVITER: " + activeConnection2.getString("invitorEmail"));
+                Log.d(ACTIVITY, "FRIEND:  " + activeConnection2.getString("friendEmail"));
+                if (activeConnection2 != null) {
+                    try {
+                        status2 = activeConnection2.getInt("status");
+                    } catch (Exception e) {
+                        Log.d(ACTIVITY, "Error getting status2: " + e);
+                    }
+                }
+            } catch (ParseException e) {
+                Log.d(ACTIVITY, e.getLocalizedMessage());
+            }
+
+            if (status1 != 0) {
+                if (status1 == 2) {
+                    localIsConnectionPending = false;
+                }
+            }
+            if (status2 != 0) {
+                if (status2 == 2) {
+                    localIsConnectionPending = false;
+                }
+            }
+            return localIsConnectionPending;
+        }
+        return false;
+    }
 }

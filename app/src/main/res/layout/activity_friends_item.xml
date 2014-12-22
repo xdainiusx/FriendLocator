@@ -55,7 +55,7 @@
             android:layout_alignParentRight="true">
 
             <ImageView
-                android:id="@+id/logo"
+                android:id="@+id/status"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_marginLeft="5dp"

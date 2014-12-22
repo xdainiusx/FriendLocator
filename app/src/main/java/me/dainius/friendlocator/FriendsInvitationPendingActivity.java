@@ -194,6 +194,7 @@ public class FriendsInvitationPendingActivity extends Activity {
 
             ParseACL friendAcl = new ParseACL();
             friendAcl.setPublicReadAccess(true);
+            friendAcl.setPublicWriteAccess(true);
             friends.setACL(friendAcl);
 
             friends.saveInBackground(new SaveCallback() {

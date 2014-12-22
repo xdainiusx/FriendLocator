@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.parse.DeleteCallback;
 import com.parse.ParseACL;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -44,6 +45,7 @@ public class FriendsActivity extends Activity {
     private Friend friendClicked = null;
     private ParseUser friendUser = null;
     private ArrayList<String> inviterFriends = null;
+    private ParseUser accountUser;
 
     /**
      * onCreate()
@@ -55,6 +57,7 @@ public class FriendsActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_friends);
 
+        this.accountUser = ParseUser.getCurrentUser();
         // Invitations
         this.inviterFriends = this.getPendingFriendInvitations();
         View invitationsTab = findViewById(R.id.invitationsTab);
@@ -82,6 +85,10 @@ public class FriendsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         Log.d(ACTIVITY, "onResume()");
+        // Check if we still have a user
+        if(this.accountUser==null){
+            this.accountUser = ParseUser.getCurrentUser();
+        }
         // Invitations
         this.inviterFriends = this.getPendingFriendInvitations();
         if(this.inviterFriends.size()==0) {
@@ -157,7 +164,7 @@ public class FriendsActivity extends Activity {
      * @param friend
      */
     private void alertDeleteFriend(Friend friend, View view) {
-
+        final Friend localFriend = friend;
         final View localView = view;
         /**
          * Alert on friend long click
@@ -171,6 +178,7 @@ public class FriendsActivity extends Activity {
                 Log.d(ACTIVITY, "Yes pressed");
                 View parent = (View)localView;
                 parent.setVisibility(View.GONE);
+                deleteFriend(getAccountUser(), localFriend.getEmail());
             }
         });
         alert.setButton(DialogInterface.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
@@ -237,6 +245,10 @@ public class FriendsActivity extends Activity {
         alert.show();
     }
 
+    public ParseUser getAccountUser() {
+        return this.accountUser;
+    }
+
     /**
      * friendIsOnline()
      * @param friend
@@ -296,28 +308,28 @@ public class FriendsActivity extends Activity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                Log.d(ACTIVITY, "Invite pressed");
-                Editable email = input.getText();
-                String emailAddress = email.toString();
-                Log.d(ACTIVITY, "Email address entered: " + emailAddress);
+            Log.d(ACTIVITY, "Invite pressed");
+            Editable email = input.getText();
+            String emailAddress = email.toString();
+            Log.d(ACTIVITY, "Email address entered: " + emailAddress);
 
-                boolean valid = isEmailValid(emailAddress);
+            boolean valid = isEmailValid(emailAddress);
 
-                boolean canCloseDialog = (valid == true);
+            boolean canCloseDialog = (valid == true);
 
-                if (canCloseDialog) {
-                    invite(emailAddress);
-                } else {
-                    String errorMessage = "Email is invalid! Please try again.";
-                    toastIt(errorMessage);
-                }
+            if (canCloseDialog) {
+                invite(emailAddress);
+            } else {
+                String errorMessage = "Email is invalid! Please try again.";
+                toastIt(errorMessage);
+            }
             }
         });
         alert.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Log.d(ACTIVITY, "Cancel pressed");
+            Log.d(ACTIVITY, "Cancel pressed");
             }
         });
         alert.show();
@@ -331,7 +343,7 @@ public class FriendsActivity extends Activity {
         List<ParseObject> userList = null;
         ArrayList<String> foundUsers = new ArrayList<String>();
         ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
-        query.whereEqualTo("friend", ParseUser.getCurrentUser().getEmail());
+        query.whereEqualTo("friend", this.getAccountUser().getEmail());
         query.whereEqualTo("status", PENDING);
         query.selectKeys(Arrays.asList("inviter"));
 
@@ -355,32 +367,18 @@ public class FriendsActivity extends Activity {
      */
     private boolean isUserAlreadyInvited(String email) {
         boolean invited = false;
-        List<ParseObject> emailList = null;
-        ArrayList<String> foundEmails = new ArrayList<String>();
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
-        query.whereEqualTo("user", ParseUser.getCurrentUser());
-        query.selectKeys(Arrays.asList("friend"));
+        FriendInvitation friendInvitation = null;
+        ParseQuery<FriendInvitation> query = ParseQuery.getQuery("FriendInvitation");
+        query.whereEqualTo("user", this.getAccountUser());
+        query.whereEqualTo("friend", email);
 
         try {
-            emailList = query.find();
-            for (ParseObject o : emailList) {
-                foundEmails.add(o.get("friend").toString());
-            }
+            friendInvitation = query.getFirst();
         } catch (ParseException e) {
-            toastIt(e.getLocalizedMessage());
+            Log.d(ACTIVITY, email + " is still not invited!");
         }
-        if(foundEmails!=null){
-            if(foundEmails.contains(email)){
-                invited = true;
-                Log.d(ACTIVITY, "Email in the list: "+email);
-            }
-            else {
-                Log.d(ACTIVITY, "No emails found!");
-            }
-        }
-        else {
-            invited = false;
-            Log.d(ACTIVITY, "Email not in the list");
+        if(friendInvitation!=null) {
+            invited = true;
         }
         return invited;
     }
@@ -392,38 +390,18 @@ public class FriendsActivity extends Activity {
      */
     private boolean userAlreadyInvitedMe(String email) {
         boolean invited = false;
-        List<FriendInvitation> emailList = null;
-        ArrayList<String> foundEmails = new ArrayList<String>();
+        FriendInvitation friendInvitation = null;
         ParseQuery<FriendInvitation> query = ParseQuery.getQuery("FriendInvitation");
         query.whereEqualTo("inviter", email);
-        query.selectKeys(Arrays.asList("user"));
+        query.whereEqualTo("user", this.getAccountUser());
 
         try {
-            emailList = query.find();
-            for (FriendInvitation o: emailList) {
-                try {
-                    ParseUser user = o.getUser().fetchIfNeeded();
-                    foundEmails.add(user.getEmail());
-                } catch(Exception e) {
-                    Log.d(ACTIVITY, "Could not get FriendInvitation from the database: " + e.getLocalizedMessage());
-                }
-            }
+            friendInvitation = query.getFirst();
         } catch (ParseException e) {
-            toastIt(e.getLocalizedMessage());
+            Log.d(ACTIVITY, email + " is still not invited by me!");
         }
-        if(foundEmails.size()!=0){
-            Log.d(ACTIVITY, "FOUND EMAIL: " + foundEmails.get(0));
-            if(foundEmails.contains(email)){
-                invited = true;
-                Log.d(ACTIVITY, "Email in the list: "+email);
-            }
-            else {
-                Log.d(ACTIVITY, "No emails found!");
-            }
-        }
-        else {
-            invited = false;
-            Log.d(ACTIVITY, "Email not in the list");
+        if(friendInvitation!=null) {
+            invited = true;
         }
         return invited;
     }
@@ -434,8 +412,7 @@ public class FriendsActivity extends Activity {
      * @return boolean
      */
     private boolean isUserMe(String email) {
-        ParseUser me = ParseUser.getCurrentUser();
-        if(me.getEmail().equals(email)) {
+        if(this.getAccountUser().getEmail().equals(email)) {
             return true;
         }
         return false;
@@ -456,20 +433,21 @@ public class FriendsActivity extends Activity {
     }
 
     /**
-     * getUserByEmail() - Assigns user to this.user so we don't do the same query again
+     * getUserByEmail()
      * @param emailAddress
      * @return ParseUser
      */
     private ParseUser getUserByEmail(String emailAddress) {
+        ParseUser user;
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo("username", emailAddress);
         try {
-            this.friendUser = query.getFirst();
+            user = query.getFirst();
         } catch (ParseException e) {
-            this.friendUser = null;
+            user = null;
             Log.d(ACTIVITY, e.getLocalizedMessage());
         }
-        return this.friendUser;
+        return user;
     }
 
     /**
@@ -508,7 +486,7 @@ public class FriendsActivity extends Activity {
      */
     public void saveToFriends(ParseUser friendUser, int status) {
         Friends friends = new Friends();
-        friends.setUser(ParseUser.getCurrentUser());
+        friends.setUser(this.getAccountUser());
         friends.setUsersFriend(friendUser);
         friends.setStatus(status);
 
@@ -536,8 +514,8 @@ public class FriendsActivity extends Activity {
         final String friendEmail = email;
         FriendInvitation friendInvitation = new FriendInvitation();
         friendInvitation.setFriend(email);
-        friendInvitation.setUser(ParseUser.getCurrentUser());
-        friendInvitation.setInviter(ParseUser.getCurrentUser().getEmail());
+        friendInvitation.setUser(this.getAccountUser());
+        friendInvitation.setInviter(this.getAccountUser().getEmail());
         friendInvitation.setStatus(FriendsActivity.PENDING);
 
         ParseACL acl = new ParseACL();
@@ -561,22 +539,62 @@ public class FriendsActivity extends Activity {
     }
 
     /**
-     * deleteFromFriendsInvitations()
+     * deleteFriend()
      * @param user
      * @param friendEmail
      */
-    public void deleteFromFriendsInvitations(ParseUser user, String friendEmail) {
-        FriendInvitation friendInvitation = null;
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("FriendInvitation");
-        query.whereEqualTo("user", ParseUser.getCurrentUser());
-        query.whereEqualTo("friend", friendEmail);
+    public void deleteFriend(ParseUser user, String friendEmail) {
+        Friends friends = null;
+        ParseUser friend = this.getUserByEmail(friendEmail);
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Friends");
+        query.whereEqualTo("user", user);
+        query.whereEqualTo("usersFriend", friend);
         try {
-            friendInvitation = (FriendInvitation)query.getFirst();
+            friends = (Friends)query.getFirst();
         } catch (ParseException e) {
-            friendInvitation = null;
+            friends = null;
             Log.d(ACTIVITY, e.getLocalizedMessage());
         }
-        friendInvitation.deleteInBackground();
+        if(friends!=null) {
+            friends.deleteInBackground(new DeleteCallback() {
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "Friend1 deleted successfully.");
+                    } else {
+                        Log.d(ACTIVITY, "Failed to delete the friend1!");
+                    }
+                }
+            });
+        }
+        else {
+            Log.d(ACTIVITY, "Error finding the friend");
+        }
+
+        // Now delete the other way
+        Friends friends2 = null;
+        ParseQuery<ParseObject> query2 = ParseQuery.getQuery("Friends");
+        query2.whereEqualTo("user", friend);
+        query2.whereEqualTo("usersFriend", user);
+        try {
+            friends2 = (Friends)query2.getFirst();
+        } catch (ParseException e) {
+            friends2 = null;
+            Log.d(ACTIVITY, e.getLocalizedMessage());
+        }
+        if(friends2!=null) {
+            friends2.deleteInBackground(new DeleteCallback() {
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Log.d(ACTIVITY, "Friend2 deleted successfully.");
+                    } else {
+                        Log.d(ACTIVITY, "Failed to delete the friend2!");
+                    }
+                }
+            });
+        }
+        else {
+            Log.d(ACTIVITY, "Error finding the friend");
+        }
     }
 
     /**
@@ -667,7 +685,7 @@ public class FriendsActivity extends Activity {
         List<Friends> friendList = null;
         Friends friends;
         ParseQuery<Friends> query = ParseQuery.getQuery("Friends");
-        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("user", this.getAccountUser());
         query.selectKeys(Arrays.asList("usersFriend"));
 
         try {
@@ -681,10 +699,13 @@ public class FriendsActivity extends Activity {
                     String id = user.getObjectId();
                     String email = user.getEmail();
                     String name = (String)user.get("name");
-                    Log.d(ACTIVITY, "Friend ID: " + id);
-                    Log.d(ACTIVITY, "Friend Email: " + email);
-                    Log.d(ACTIVITY, "Friend Name: " + name);
+                    boolean online = (boolean)user.getBoolean("isOnline");
+                    Log.d(ACTIVITY, "Friend ID:     =====>" + id);
+                    Log.d(ACTIVITY, "Friend Email:  =====>" + email);
+                    Log.d(ACTIVITY, "Friend Name:   =====>" + name);
+                    Log.d(ACTIVITY, "Friend isOnline:  ==>" + online);
                     Friend friend = new Friend(id, name, email);
+                    friend.setIsOnline(online);
                     friendsArrayList.add(friend);
                 } catch (Exception e) {
                     Log.d(ACTIVITY, "User parse error! " + e.getLocalizedMessage());
