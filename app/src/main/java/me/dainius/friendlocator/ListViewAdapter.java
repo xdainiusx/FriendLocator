@@ -50,8 +50,17 @@ public class ListViewAdapter extends ArrayAdapter<Friend> {
         if(friends[position]!=null)
             textViewFriendName.setText(friends[position].getName());
         TextView textViewFriendEmail = (TextView) rowView.findViewById(R.id.friendEmail);
-        if(friends[position]!=null)
-            textViewFriendEmail.setText(friends[position].getEmail());
+        ImageView imageViewStatus = (ImageView) rowView.findViewById(R.id.status);
+        if(friends[position]!=null) {
+            Friend f = friends[position];
+            textViewFriendEmail.setText(f.getEmail());
+            if(f.isOnline()) {
+                imageViewStatus.setImageResource(R.drawable.gps_green);
+            }
+            else {
+                imageViewStatus.setImageResource(R.drawable.gps_red);
+            }
+        }
 
         Friend friend = friends[position];
 

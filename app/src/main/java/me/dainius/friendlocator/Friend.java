@@ -16,7 +16,7 @@ public class Friend implements Comparable<Friend>{
     private String name;
     private String email;
     private String image;
-    private String status; // pending, active, declined
+    private int status; // pending, active, declined
     private boolean tracking = false;
     private boolean isOnline = false;
     private double lastLatitude;
@@ -108,8 +108,16 @@ public class Friend implements Comparable<Friend>{
      * getStatus() - getter
      * @return
      */
-    public String getStatus() {
+    public int getStatus() {
         return this.status;
+    }
+
+    /**
+     * setStatus()
+     * @param status
+     */
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     /**
@@ -126,6 +134,15 @@ public class Friend implements Comparable<Friend>{
      */
     public boolean isOnline() {
         return this.isOnline;
+    }
+
+    /**
+     *  setIsOnline()
+     * @param status
+     */
+    public void setIsOnline(boolean status) {
+
+        this.isOnline = status;
     }
 
     /**
